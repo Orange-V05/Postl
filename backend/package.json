@@ -4,7 +4,9 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "concurrently \"node server.js\" \"python LocalAIServer/server.py\""
+    "start": "concurrently \"node server.js\" \"python LocalAIServer/server.py\"",
+    "start:prod": "node server.js",
+    "build": "echo 'No build step required for backend'"
   },
   "dependencies": {
     "axios": "^1.14.0",
