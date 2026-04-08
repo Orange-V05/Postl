@@ -121,6 +121,7 @@ const GeneratePost: React.FC = () => {
         creativity: prefs.creativity,
         prefLocal: prefs.aiModel === 'local',
         variants: 1,
+        model: prefs.selectedModel,
       }, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -190,6 +191,7 @@ const GeneratePost: React.FC = () => {
         creativity: prefs.creativity,
         prefLocal: prefs.aiModel === 'local',
         variants: 3,
+        model: prefs.selectedModel,
       }, {
         headers: { Authorization: `Bearer ${token}` },
         timeout: 90000,
@@ -252,6 +254,8 @@ const GeneratePost: React.FC = () => {
           <ModelSelector
             aiModel={prefs.aiModel}
             setAiModel={(m) => setPrefs({ aiModel: m })}
+            selectedModel={prefs.selectedModel}
+            setSelectedModel={(m) => setPrefs({ selectedModel: m })}
           />
 
           <div className="flex flex-col gap-6 mb-6">

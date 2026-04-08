@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 
 interface UserPreferences {
   aiModel: 'cloud' | 'local';
+  selectedModel: string;
   creativity: number;
   tone: 'professional' | 'casual' | 'witty' | 'enthusiastic' | 'bold' | 'minimal' | 'storytelling' | 'data-driven';
   fontSize: number;
@@ -29,6 +30,7 @@ interface AppState {
 
 const defaultPrefs: UserPreferences = {
   aiModel: 'cloud',
+  selectedModel: 'mistralai/mistral-small-3.1-24b-instruct:free',
   creativity: 0.7,
   tone: 'professional',
   fontSize: 28,

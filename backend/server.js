@@ -246,6 +246,7 @@ const generateSchema = Joi.object({
   creativity: Joi.number().min(0).max(1).default(0.7),
   prefLocal: Joi.boolean().default(false),
   variants: Joi.number().min(1).max(3).default(1),
+  model: Joi.string().default("mistralai/mistral-small-3.1-24b-instruct:free"),
 });
 
 // ─── Platform Intelligence v4.0 ──────────────────────────────────────────────
@@ -509,7 +510,7 @@ router.post("/generate-post", authenticate, async (req, res) => {
   const { error, value } = generateSchema.validate(req.body);
   if (error) return res.status(400).json({ error: error.details[0].message });
 
-  let { prompt, topic, platform, contentType, tone, creativity, prefLocal, variants } = value;
+  let { prompt, topic, platform, contentType, tone, creativity, prefLocal, variants, model } = value;
   
   const startTime = Date.now();
   prompt = await refineUserPrompt(prompt, topic);
@@ -539,7 +540,7 @@ router.post("/generate-post", authenticate, async (req, res) => {
             const response = await axios.post(
               "https://openrouter.ai/api/v1/chat/completions",
               {
-                model: "mistralai/mistral-small-3.1-24b-instruct:free",
+                model: model,
                 temperature: Math.min(1.2, creativity + (i * 0.1)), // Slightly vary temp per variant
                 max_tokens: 1000,
                 messages: [
@@ -579,7 +580,7 @@ router.post("/generate-post", authenticate, async (req, res) => {
           results,
           strategy,
           meta: {
-            model: "mistral-small-3.1-24b",
+            model: model,
             engine: "cloud",
             variants: results.length,
             elapsedMs,
