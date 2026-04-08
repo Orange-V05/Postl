@@ -1,0 +1,44 @@
+# dependencies
+/node_modules/
+
+# environment variables
+.env
+
+# production build output
+/build/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Vite build output
+/dist/
+/dist-ssr/
+
+# Python / AI Server environments
+venv/
+env/
+.venv/
+__pycache__/
+*.pyc
+
+# Local env files
+.env.*
+!.env.example
+
+# Secrets
+firebase-key.json
+service-account.json
