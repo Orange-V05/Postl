@@ -401,6 +401,8 @@ const refineUserPrompt = async (prompt, topic) => {
       headers: {
         Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
+        "HTTP-Referer": "https://postl-v4.vercel.app",
+        "X-Title": "Postl Content Intelligence",
       },
       body: JSON.stringify({
         model: "mistralai/mistral-small-3.1-24b-instruct:free",
@@ -428,6 +430,8 @@ Examples (for context: tech):
     clearTimeout(timeoutId);
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Cloud AI Expansion Error] Status: ${response.status}, Body: ${errorText}`);
       throw new Error(`Cloud AI expansion failed: ${response.status}`);
     }
     
@@ -520,6 +524,9 @@ router.post("/generate-post", authenticate, async (req, res) => {
 
   let { prompt, topic, platform, contentType, tone, creativity, prefLocal, variants, model } = value;
   
+  // Dynamic fallback for model
+  if (!model) model = "mistralai/mistral-small-3.1-24b-instruct:free";
+  
   const startTime = Date.now();
   prompt = await refineUserPrompt(prompt, topic);
   
@@ -553,6 +560,8 @@ router.post("/generate-post", authenticate, async (req, res) => {
               headers: {
                 Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
                 "Content-Type": "application/json",
+                "HTTP-Referer": "https://postl-v4.vercel.app",
+                "X-Title": "Postl Content Intelligence",
               },
               body: JSON.stringify({
                 model: model,
@@ -572,6 +581,8 @@ router.post("/generate-post", authenticate, async (req, res) => {
             clearTimeout(timeoutId);
             
             if (!response.ok) {
+              const errorText = await response.text();
+              console.error(`[Cloud AI Generation Error] Status: ${response.status}, Body: ${errorText}`);
               throw new Error(`Cloud AI core failed: ${response.status}`);
             }
             
