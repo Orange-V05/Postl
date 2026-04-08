@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import axios from "axios";
+// axios removed - using native fetch instead
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
@@ -393,10 +393,16 @@ const refineUserPrompt = async (prompt, topic) => {
   if (!process.env.OPENROUTER_API_KEY) return prompt;
 
   try {
-    console.log(`[Smart Prompt] Expanding short prompt: "${prompt}"...`);
-    const response = await axios.post(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
         model: "mistralai/mistral-small-3.1-24b-instruct:free",
         temperature: 0.9,
         max_tokens: 100,
@@ -415,16 +421,18 @@ Examples (for context: tech):
             content: `Expand this subject: "${prompt}" (Angle/Flavor: ${topic})`,
           },
         ],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        timeout: 10000,
-      }
-    );
-    const refined = response.data.choices[0]?.message?.content || prompt;
+      }),
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`Cloud AI expansion failed: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const refined = data.choices[0]?.message?.content || prompt;
     console.log(`[Smart Prompt] Refined to: "${refined.trim()}"`);
     return refined.trim().replace(/^['"]|['"]$/g, '');
   } catch (err) {
@@ -537,11 +545,18 @@ router.post("/generate-post", authenticate, async (req, res) => {
         // Generate requested number of variants
         const variantPromises = Array.from({ length: variants }, (_, i) => 
           callWithRetry(async () => {
-            const response = await axios.post(
-              "https://openrouter.ai/api/v1/chat/completions",
-              {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+            
+            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
                 model: model,
-                temperature: Math.min(1.2, creativity + (i * 0.1)), // Slightly vary temp per variant
+                temperature: Math.min(1.2, creativity + (i * 0.1)), 
                 max_tokens: 1000,
                 messages: [
                   { role: "system", content: systemPrompt },
@@ -550,16 +565,18 @@ router.post("/generate-post", authenticate, async (req, res) => {
                     content: `Create a ${contentType} about: ${prompt}${i > 0 ? `\n\n(Generate a DIFFERENT angle/approach than the previous version. Variation #${i + 1}.)` : ''}`,
                   },
                 ],
-              },
-              {
-                headers: {
-                  Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                  "Content-Type": "application/json",
-                },
-                timeout: 30000,
-              }
-            );
-            return response.data.choices[0]?.message?.content || "";
+              }),
+              signal: controller.signal,
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+              throw new Error(`Cloud AI core failed: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data.choices[0]?.message?.content || "";
           })
         );
         
@@ -603,11 +620,26 @@ router.post("/generate-post", authenticate, async (req, res) => {
 
   try {
     console.log(`[Local AI] Connecting to Neural Engine at ${AI_SERVER_URL}...`);
-    const localResponse = await axios.post(`${AI_SERVER_URL}/generate-post`, {
-      prompt, topic, platform, contentType, tone, creativity
-    }, { timeout: 60000 });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
     
-    const cleanResults = localResponse.data.results.map(cleanAIResult);
+    const localResponse = await fetch(`${AI_SERVER_URL}/generate-post`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt, topic, platform, contentType, tone, creativity
+      }),
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!localResponse.ok) {
+      throw new Error(`Local AI Engine error: ${localResponse.status}`);
+    }
+    
+    const localData = await localResponse.json();
+    const cleanResults = localData.results.map(cleanAIResult);
     const primaryResult = cleanResults[0] || "";
     const strategy = generateStrategyBrief(platform, contentType, primaryResult);
     const elapsedMs = Date.now() - startTime;
