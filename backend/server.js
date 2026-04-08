@@ -407,13 +407,11 @@ const refineUserPrompt = async (prompt, topic) => {
       headers: {
         Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://postl-v4.vercel.app",
-        "X-Title": "Postl Content Intelligence",
       },
       body: JSON.stringify({
         model: "mistralai/mistral-small-3.1-24b-instruct:free",
-        temperature: 0.9,
-        max_tokens: 100,
+        temperature: 0.7,
+        max_tokens: 300,
         messages: [
           {
             role: "system",
@@ -590,13 +588,11 @@ router.post("/generate-post", authenticate, async (req, res) => {
               headers: {
                 Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
                 "Content-Type": "application/json",
-                "HTTP-Referer": "https://postl-v4.vercel.app",
-                "X-Title": "Postl Content Intelligence",
               },
               body: JSON.stringify({
-                model: model,
-                temperature: Math.min(1.2, creativity + (i * 0.1)), 
-                max_tokens: 1000,
+                model: model || "mistralai/mistral-small-3.1-24b-instruct:free",
+                temperature: Number(Math.min(1.2, Number(creativity) + (i * 0.1)).toFixed(2)), 
+                max_tokens: 800,
                 messages: [
                   { role: "system", content: systemPrompt },
                   {
@@ -615,13 +611,10 @@ router.post("/generate-post", authenticate, async (req, res) => {
               console.error(`[Cloud AI Generation Error] Status: ${response.status}, Body: ${errorText}`);
               
               // RESILIENCE: Try a hard fallback model if the primary fails
-              if (model !== "google/gemini-2.0-flash-exp:free") {
-                console.warn("[Cloud AI Resilience] Primary model failed. Attempting Emergency Fallback (Gemini Flash)...");
-                return callWithRetry(() => {
-                   // This is an internal retry with a different model
-                   // For brevity, we'll just throw and let the loop handle it or implement actual recursive call
-                   throw new Error("RETRY_WITH_FALLBACK");
-                }, 0);
+              if (model !== "mistralai/mistral-small-3.1-24b-instruct:free") {
+                console.warn("[Cloud AI Resilience] Primary model failed. Attempting Emergency Fallback (Mistral Free)...");
+                model = "mistralai/mistral-small-3.1-24b-instruct:free";
+                throw new Error("RETRY_WITH_FALLBACK");
               }
               
               throw new Error(`Cloud AI core failed: ${response.status}`);
