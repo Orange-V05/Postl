@@ -119,7 +119,6 @@ const GeneratePost: React.FC = () => {
         contentType,
         tone: prefs.tone,
         creativity: prefs.creativity,
-        prefLocal: prefs.aiModel === 'local',
         variants: 1,
         model: prefs.selectedModel,
       }, {
@@ -158,7 +157,7 @@ const GeneratePost: React.FC = () => {
         topic,
         contentType,
         tone: prefs.tone,
-        model: prefs.aiModel,
+        model: prefs.selectedModel,
         engagementScore: response.data.strategy?.engagementScore || null,
         timestamp: serverTimestamp()
       };
@@ -189,7 +188,6 @@ const GeneratePost: React.FC = () => {
         contentType,
         tone: prefs.tone,
         creativity: prefs.creativity,
-        prefLocal: prefs.aiModel === 'local',
         variants: 3,
         model: prefs.selectedModel,
       }, {
@@ -252,8 +250,6 @@ const GeneratePost: React.FC = () => {
           className="glass-panel p-7 rounded-[2rem] border-[var(--glass-border)] shadow-2xl"
         >
           <ModelSelector
-            aiModel={prefs.aiModel}
-            setAiModel={(m) => setPrefs({ aiModel: m })}
             selectedModel={prefs.selectedModel}
             setSelectedModel={(m) => setPrefs({ selectedModel: m })}
           />
@@ -313,7 +309,7 @@ const GeneratePost: React.FC = () => {
               {loading ? (
                 <div className="flex items-center space-x-3">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span className="font-display">{prefs.aiModel === 'local' ? 'ORCHESTRATING...' : 'GENERATING...'}</span>
+                  <span className="font-display">GENERATING...</span>
                   <span className="font-mono text-xs opacity-70">{(genTimer / 1000).toFixed(1)}s</span>
                 </div>
               ) : (
