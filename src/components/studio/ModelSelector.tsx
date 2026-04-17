@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export const OPEN_MODELS = [
   { id: 'mistralai/mistral-small-3.1-24b-instruct:free', name: 'Mistral Small (Free)', type: 'Reliable' },
-  { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash', type: 'Fast' },
+  { id: 'google/gemini-2.0-flash-001', name: 'Gemini 2.0 Flash', type: 'Fast' },
   { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 (Pro)', type: 'Advanced' },
 ];
 

@@ -15,7 +15,7 @@ dotenv.config();
 
 // Power Debug: Clean and sanitize API Keys
 if (process.env.OPENROUTER_API_KEY) {
-  process.env.OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY.replace(/["']/g, "").trim();
+  process.env.OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY.replace(/["'\r\n\s]/g, "").trim();
 }
 
 const __filename = fileURLToPath(import.meta.url);
@@ -407,6 +407,9 @@ const refineUserPrompt = async (prompt, topic) => {
       headers: {
         Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
+        "HTTP-Referer": "https://postl-v4.vercel.app",
+        "Origin": "https://postl-v4.vercel.app",
+        "X-Title": "Postl Content Intelligence",
       },
       body: JSON.stringify({
         model: "mistralai/mistral-small-3.1-24b-instruct:free",
@@ -588,6 +591,9 @@ router.post("/generate-post", authenticate, async (req, res) => {
               headers: {
                 Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
                 "Content-Type": "application/json",
+                "HTTP-Referer": "https://postl-v4.vercel.app",
+                "Origin": "https://postl-v4.vercel.app",
+                "X-Title": "Postl Content Intelligence",
               },
               body: JSON.stringify({
                 model: model || "mistralai/mistral-small-3.1-24b-instruct:free",
@@ -706,10 +712,11 @@ router.post("/generate-post", authenticate, async (req, res) => {
     return res.json(responseData);
   } catch (localErr) {
     console.error("[Fatal] Resilience Failure:", localErr.message);
-    if (localErr.code === 'ECONNREFUSED') {
-      return res.status(503).json({ error: "Local Neural Engine is still booting up. Please wait 15 seconds and try again." });
-    }
-    return res.status(500).json({ error: "All creative engines failed. Please check connectivity or API keys." });
+    const detail = (localErr.message || "Unknown").substring(0, 100);
+    return res.status(500).json({ 
+      error: `All creative engines failed. Last error: ${detail}`,
+      suggestion: "Check OpenRouter balance or Render logs for specific API rejection."
+    });
   }
 });
 
