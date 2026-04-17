@@ -571,6 +571,7 @@ router.post("/generate-post", authenticate, async (req, res) => {
   }
 
   // Cloud AI (OpenRouter) — PRIMARY ENGINE
+  let cloudError = null;
   if (!prefLocal) {
     if (!process.env.OPENROUTER_API_KEY) {
       console.warn("[Cloud AI] Warning: OPENROUTER_API_KEY missing. Falling back to Local AI Engine.");
@@ -616,6 +617,10 @@ router.post("/generate-post", authenticate, async (req, res) => {
               const errorText = await response.text();
               console.error(`[Cloud AI Generation Error] Status: ${response.status}, Body: ${errorText}`);
               
+              if (response.status === 429) {
+                throw new Error("429_RATE_LIMIT: " + errorText.substring(0, 50));
+              }
+
               // RESILIENCE: Try a hard fallback model if the primary fails
               if (model !== "google/gemma-3-27b-it:free") {
                 console.warn("[Cloud AI Resilience] Primary model failed. Attempting Emergency Fallback (Mistral Free)...");
@@ -637,6 +642,9 @@ router.post("/generate-post", authenticate, async (req, res) => {
           .map(r => cleanAIResult(r.value));
         
         if (results.length === 0) {
+          if (rawResults.some(r => r.status === 'rejected' && r.reason && r.reason.message && r.reason.message.includes('429'))) {
+             throw new Error("429_RATE_LIMIT");
+          }
           throw new Error("All variant generations returned empty.");
         }
         
@@ -661,6 +669,7 @@ router.post("/generate-post", authenticate, async (req, res) => {
         cacheSet(cacheKey, responseData);
         return res.json(responseData);
       } catch (err) {
+        cloudError = err;
         console.warn("[Cloud AI] Performance bottleneck, attempting Local Neural Engine:", err.message);
       }
     }
@@ -712,7 +721,13 @@ router.post("/generate-post", authenticate, async (req, res) => {
     return res.json(responseData);
   } catch (localErr) {
     console.error("[Fatal] Resilience Failure:", localErr.message);
-    const detail = (localErr.message || "Unknown").substring(0, 100);
+    if (cloudError && cloudError.message && cloudError.message.includes("429")) {
+       return res.status(500).json({
+          error: "API Provider is experiencing extreme high traffic and rate-limits on Free models. Please switch to Gemini 2.0 or try again in a few minutes.",
+          suggestion: "High queue times for Llama or Gemma Free."
+       });
+    }
+    const detail = (cloudError?.message || localErr.message || "Unknown").substring(0, 100);
     return res.status(500).json({ 
       error: `All creative engines failed. Last error: ${detail}`,
       suggestion: "Check OpenRouter balance or Render logs for specific API rejection."
