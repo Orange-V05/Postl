@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface UserPreferences {
-  aiModel: 'cloud' | 'local';
   selectedModel: string;
   creativity: number;
   tone: 'professional' | 'casual' | 'witty' | 'enthusiastic' | 'bold' | 'minimal' | 'storytelling' | 'data-driven';
@@ -29,7 +27,6 @@ interface AppState {
 }
 
 const defaultPrefs: UserPreferences = {
-  aiModel: 'cloud',
   selectedModel: 'google/gemma-3-27b-it:free',
   creativity: 0.7,
   tone: 'professional',

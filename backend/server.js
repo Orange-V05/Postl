@@ -250,7 +250,6 @@ const generateSchema = Joi.object({
     .valid("professional", "casual", "witty", "enthusiastic", "bold", "minimal", "storytelling", "data-driven")
     .default("professional"),
   creativity: Joi.number().min(0).max(1).default(0.7),
-  prefLocal: Joi.boolean().default(false),
   variants: Joi.number().min(1).max(3).default(1),
   model: Joi.string().default("google/gemma-3-27b-it:free"),
 });
@@ -553,7 +552,7 @@ router.post("/generate-post", authenticate, async (req, res) => {
   const { error, value } = generateSchema.validate(req.body);
   if (error) return res.status(400).json({ error: error.details[0].message });
 
-  let { prompt, topic, platform, contentType, tone, creativity, prefLocal, variants, model } = value;
+  let { prompt, topic, platform, contentType, tone, creativity, variants, model } = value;
   
   // Dynamic fallback for model
   if (!model) model = "google/gemma-3-27b-it:free";
@@ -572,8 +571,7 @@ router.post("/generate-post", authenticate, async (req, res) => {
 
   // Cloud AI (OpenRouter) — PRIMARY ENGINE
   let cloudError = null;
-  if (!prefLocal) {
-    if (!process.env.OPENROUTER_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY) {
       console.warn("[Cloud AI] Warning: OPENROUTER_API_KEY missing. Falling back to Local AI Engine.");
     } else {
       try {
@@ -669,70 +667,20 @@ router.post("/generate-post", authenticate, async (req, res) => {
         cacheSet(cacheKey, responseData);
         return res.json(responseData);
       } catch (err) {
-        cloudError = err;
-        console.warn("[Cloud AI] Performance bottleneck, attempting Local Neural Engine:", err.message);
+        console.error("[Fatal] Cloud AI Engine Failure:", err.message);
+        if (err.message.includes("429")) {
+           return res.status(500).json({
+              error: "API Provider is experiencing extreme high traffic and rate-limits on Free models. Please switch to Gemini 2.0 or try again in a few minutes.",
+              suggestion: "High queue times for Llama or Gemma Free."
+           });
+        }
+        const detail = (err.message || "Unknown").substring(0, 100);
+        return res.status(500).json({ 
+          error: `Cloud AI request failed: ${detail}`,
+          suggestion: "Check OpenRouter API key validity."
+        });
       }
     }
-  }
-
-  // ─── Local AI Fallback ────────────────────────────────────────────────────────
-  const AI_SERVER_URL = process.env.AI_SERVER_URL || "http://localhost:5000";
-
-  try {
-    console.log(`[Local AI] Connecting to Neural Engine at ${AI_SERVER_URL}...`);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
-    
-    const localResponse = await fetch(`${AI_SERVER_URL}/generate-post`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        prompt, topic, platform, contentType, tone, creativity
-      }),
-      signal: controller.signal,
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!localResponse.ok) {
-      throw new Error(`Local AI Engine error: ${localResponse.status}`);
-    }
-    
-    const localData = await localResponse.json();
-    const cleanResults = localData.results.map(cleanAIResult);
-    const primaryResult = cleanResults[0] || "";
-    const strategy = generateStrategyBrief(platform, contentType, primaryResult);
-    const elapsedMs = Date.now() - startTime;
-    
-    const responseData = {
-      results: cleanResults,
-      strategy,
-      meta: {
-        model: "gpt2-large",
-        engine: "local",
-        variants: cleanResults.length,
-        elapsedMs,
-        platform,
-        contentType,
-        tone,
-      },
-    };
-    cacheSet(cacheKey, responseData);
-    return res.json(responseData);
-  } catch (localErr) {
-    console.error("[Fatal] Resilience Failure:", localErr.message);
-    if (cloudError && cloudError.message && cloudError.message.includes("429")) {
-       return res.status(500).json({
-          error: "API Provider is experiencing extreme high traffic and rate-limits on Free models. Please switch to Gemini 2.0 or try again in a few minutes.",
-          suggestion: "High queue times for Llama or Gemma Free."
-       });
-    }
-    const detail = (cloudError?.message || localErr.message || "Unknown").substring(0, 100);
-    return res.status(500).json({ 
-      error: `All creative engines failed. Last error: ${detail}`,
-      suggestion: "Check OpenRouter balance or Render logs for specific API rejection."
-    });
-  }
 });
 
 // Universal Routing mounts
