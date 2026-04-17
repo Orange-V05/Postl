@@ -400,7 +400,7 @@ const refineUserPrompt = async (prompt, topic) => {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -584,7 +584,7 @@ router.post("/generate-post", authenticate, async (req, res) => {
         const variantPromises = Array.from({ length: variants }, (_, i) => 
           callWithRetry(async () => {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000);
+            const timeoutId = setTimeout(() => controller.abort(), 90000);
             
             const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
               method: "POST",
