@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+interface UserPreferences {
   selectedModel: string;
   creativity: number;
   tone: 'professional' | 'casual' | 'witty' | 'enthusiastic' | 'bold' | 'minimal' | 'storytelling' | 'data-driven';
