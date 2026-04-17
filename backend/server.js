@@ -416,17 +416,15 @@ const refineUserPrompt = async (prompt, topic) => {
         max_tokens: 300,
         messages: [
           {
-            role: "system",
-            content: `You are a creative prompt expander. The user will provide a short subject (1-5 words). Expand it into one vivid, specific, actionable sentence that a content creator can use as a post topic. 
+            role: "user",
+            content: `INSTRUCTIONS: You are a creative prompt expander. The user will provide a short subject (1-5 words). Expand it into one vivid, specific, actionable sentence that a content creator can use as a post topic. 
 CRITICAL RULE: You MUST preserve the exact core subject the user provides. Do not completely change the subject just to fit the context. Use the context only as an angle/flavor.
 
 Examples (for context: tech):
 - "elephant" → "How AI researchers are using machine learning to track and protect elephant populations."
-- "coffee" → "The tech stack behind the world's largest automated coffee roasting facility."`,
-          },
-          {
-            role: "user",
-            content: `Expand this subject: "${prompt}" (Angle/Flavor: ${topic})`,
+- "coffee" → "The tech stack behind the world's largest automated coffee roasting facility."
+
+Expand this subject: "${prompt}" (Angle/Flavor: ${topic})`,
           },
         ],
       }),
@@ -560,7 +558,7 @@ router.post("/generate-post", authenticate, async (req, res) => {
   const startTime = Date.now();
   prompt = await refineUserPrompt(prompt, topic);
   
-  const cacheKey = makeCacheKey({ prompt, topic, platform, contentType, tone, creativity, prefLocal, variants });
+  const cacheKey = makeCacheKey({ prompt, topic, platform, contentType, tone, creativity, variants });
   const platformRules = PLATFORM_RULES[platform] || PLATFORM_RULES.twitter;
 
   const cached = cacheGet(cacheKey);
@@ -599,10 +597,9 @@ router.post("/generate-post", authenticate, async (req, res) => {
                 temperature: Number(Math.min(1.2, Number(creativity) + (i * 0.1)).toFixed(2)), 
                 max_tokens: 800,
                 messages: [
-                  { role: "system", content: systemPrompt },
                   {
                     role: "user",
-                    content: `Create a ${contentType} about: ${prompt}${i > 0 ? `\n\n(Generate a DIFFERENT angle/approach than the previous version. Variation #${i + 1}.)` : ''}`,
+                    content: `INSTRUCTIONS:\n${systemPrompt}\n\nCONTENT REQUEST:\nCreate a ${contentType} about: ${prompt}${i > 0 ? `\n\n(Generate a DIFFERENT angle/approach than the previous version. Variation #${i + 1}.)` : ''}`,
                   },
                 ],
               }),
