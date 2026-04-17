@@ -227,7 +227,7 @@ const GeneratePost: React.FC = () => {
         prompt,
         result,
         feedback: type,
-        engine: prefs.aiModel,
+        engine: 'cloud',
         platform,
         contentType,
         timestamp: serverTimestamp()
