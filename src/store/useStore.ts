@@ -30,7 +30,7 @@ interface AppState {
 
 const defaultPrefs: UserPreferences = {
   aiModel: 'cloud',
-  selectedModel: 'mistralai/mistral-small-3.1-24b-instruct:free',
+  selectedModel: 'google/gemma-3-27b-it:free',
   creativity: 0.7,
   tone: 'professional',
   fontSize: 28,

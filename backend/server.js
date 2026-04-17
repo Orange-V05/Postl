@@ -252,7 +252,7 @@ const generateSchema = Joi.object({
   creativity: Joi.number().min(0).max(1).default(0.7),
   prefLocal: Joi.boolean().default(false),
   variants: Joi.number().min(1).max(3).default(1),
-  model: Joi.string().default("mistralai/mistral-small-3.1-24b-instruct:free"),
+  model: Joi.string().default("google/gemma-3-27b-it:free"),
 });
 
 // ─── Platform Intelligence v4.0 ──────────────────────────────────────────────
@@ -412,7 +412,7 @@ const refineUserPrompt = async (prompt, topic) => {
         "X-Title": "Postl Content Intelligence",
       },
       body: JSON.stringify({
-        model: "mistralai/mistral-small-3.1-24b-instruct:free",
+        model: "google/gemma-3-27b-it:free",
         temperature: 0.7,
         max_tokens: 300,
         messages: [
@@ -556,7 +556,7 @@ router.post("/generate-post", authenticate, async (req, res) => {
   let { prompt, topic, platform, contentType, tone, creativity, prefLocal, variants, model } = value;
   
   // Dynamic fallback for model
-  if (!model) model = "mistralai/mistral-small-3.1-24b-instruct:free";
+  if (!model) model = "google/gemma-3-27b-it:free";
   
   const startTime = Date.now();
   prompt = await refineUserPrompt(prompt, topic);
@@ -596,7 +596,7 @@ router.post("/generate-post", authenticate, async (req, res) => {
                 "X-Title": "Postl Content Intelligence",
               },
               body: JSON.stringify({
-                model: model || "mistralai/mistral-small-3.1-24b-instruct:free",
+                model: model || "google/gemma-3-27b-it:free",
                 temperature: Number(Math.min(1.2, Number(creativity) + (i * 0.1)).toFixed(2)), 
                 max_tokens: 800,
                 messages: [
@@ -617,9 +617,9 @@ router.post("/generate-post", authenticate, async (req, res) => {
               console.error(`[Cloud AI Generation Error] Status: ${response.status}, Body: ${errorText}`);
               
               // RESILIENCE: Try a hard fallback model if the primary fails
-              if (model !== "mistralai/mistral-small-3.1-24b-instruct:free") {
+              if (model !== "google/gemma-3-27b-it:free") {
                 console.warn("[Cloud AI Resilience] Primary model failed. Attempting Emergency Fallback (Mistral Free)...");
-                model = "mistralai/mistral-small-3.1-24b-instruct:free";
+                model = "google/gemma-3-27b-it:free";
                 throw new Error("RETRY_WITH_FALLBACK");
               }
               
