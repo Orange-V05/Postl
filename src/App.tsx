@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import PrivateRoute from './components/PrivateRoute';
 import { useStore } from './store/useStore';
+import GooeyBackground from './components/GooeyBackground';
 
 // Linear imports (Removing lazy loading for absolute stability)
 import Home from './pages/home';
@@ -16,6 +17,7 @@ function App() {
 
   return (
     <div className={prefs?.darkMode ? 'dark' : 'light'}>
+      <GooeyBackground />
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />

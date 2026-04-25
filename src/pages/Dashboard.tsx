@@ -127,16 +127,7 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen aurora-bg page-container flex flex-col selection:bg-emerald-500/30">
       {/* Subtle animated background orbs */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.03, 0.08, 0.03] }}
-          transition={{ duration: 15, repeat: Infinity }}
-          className="absolute top-[5%] right-[10%] w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px]"
-        />
-        <motion.div
-          animate={{ scale: [1, 1.3, 1], opacity: [0.02, 0.06, 0.02] }}
-          transition={{ duration: 20, repeat: Infinity, delay: 5 }}
-          className="absolute bottom-[10%] left-[5%] w-80 h-80 bg-teal-500/10 rounded-full blur-[100px]"
-        />
+        {/* Global GooeyBackground now handles this */}
       </div>
 
       <motion.div
