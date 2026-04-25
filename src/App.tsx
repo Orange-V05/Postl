@@ -16,7 +16,7 @@ function App() {
   const { prefs } = store;
 
   return (
-    <div className={`${prefs?.darkMode ? 'dark' : 'light'} min-h-screen bg-[var(--bg-color)] text-[var(--text-color)] transition-colors duration-500`}>
+    <div className={`${prefs?.darkMode ? 'dark' : 'light'} min-h-screen text-[var(--text-color)] transition-colors duration-500`}>
       <GooeyBackground />
       <Navbar />
       <Routes>
