@@ -7,28 +7,29 @@
   left: 0;
 }
 
-/* Light Mode: Fresh Pastel Palette */
+/* Light Mode: Bold "Earth & Clay" Palette */
+/* Using darker colors because they multiply better on white */
 .light .gooey-container {
-  --color1: 255, 190, 210; /* Pastel Pink */
-  --color2: 180, 230, 255; /* Sky Blue */
-  --color3: 190, 255, 230; /* Mint Green */
-  --color4: 255, 240, 190; /* Soft Peach */
-  --color5: 220, 210, 255; /* Lavender */
+  --color1: 154, 52, 18;   /* Burnt Orange */
+  --color2: 21, 128, 61;   /* Forest Green */
+  --color3: 126, 34, 206;  /* Deep Purple */
+  --color4: 180, 83, 9;    /* Rich Ochre */
+  --color5: 190, 24, 93;   /* Deep Rose */
   --color-interactive: 16, 185, 129;
-  --blending: multiply; /* Better for light backgrounds to prevent washing out text */
-  opacity: 0.35;
+  --blending: multiply; 
+  opacity: 0.6; /* High visibility in light mode */
 }
 
-/* Dark Mode: Vibrant Cyberpunk Palette */
+/* Dark Mode: Vibrant "Neon Cyber" Palette */
 .dark .gooey-container {
-  --color1: 80, 140, 255;  /* Electric Blue */
-  --color2: 240, 60, 255;  /* Magenta Neon */
-  --color3: 60, 255, 220;   /* Cyan Neon */
-  --color4: 255, 120, 60;  /* Atomic Orange */
-  --color5: 140, 80, 255;  /* Deep Violet */
+  --color1: 100, 100, 255;  /* Electric Blue */
+  --color2: 255, 80, 255;   /* Hot Pink */
+  --color3: 80, 255, 255;   /* Neon Cyan */
+  --color4: 255, 150, 50;   /* Bright Orange */
+  --color5: 200, 100, 255;  /* Purple Rain */
   --color-interactive: 16, 185, 129;
   --blending: screen;
-  opacity: 0.75;
+  opacity: 0.8;
 }
 
 @keyframes moveInCircle {
