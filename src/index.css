@@ -6,12 +6,12 @@
 :root {
   --bg-color: #f8fafc;
   --text-color: #0f172a;
-  --muted-color: #475569;
+  --muted-color: #334155;
   --aurora-bg: radial-gradient(circle at 50% 50%, #f1f5f9 0%, #cbd5e1 100%);
-  --aurora-1: rgba(16, 185, 129, 0.15);
-  --aurora-2: rgba(5, 150, 105, 0.1);
-  --aurora-3: rgba(6, 78, 59, 0.05);
-  --aurora-4: rgba(56, 189, 248, 0.05);
+  --aurora-1: rgba(16, 185, 129, 0.08);
+  --aurora-2: rgba(5, 150, 105, 0.05);
+  --aurora-3: rgba(6, 78, 59, 0.03);
+  --aurora-4: rgba(56, 189, 248, 0.03);
   --glass-bg: rgba(255, 255, 255, 0.85);
   --glass-border: rgba(16, 185, 129, 0.2);
   --panel-bg: #ffffff;
