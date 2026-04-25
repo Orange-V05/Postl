@@ -104,21 +104,7 @@ const Home: React.FC = () => {
       <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center px-6">
         {/* Animated aurora orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{ scale: [1, 1.3, 1], opacity: [0.08, 0.2, 0.08] }}
-            transition={{ duration: 12, repeat: Infinity }}
-            className="absolute top-[-15%] right-[-10%] w-[60%] h-[60%] bg-emerald-500/10 rounded-full blur-[150px]"
-          />
-          <motion.div
-            animate={{ scale: [1, 1.4, 1], opacity: [0.05, 0.15, 0.05] }}
-            transition={{ duration: 18, repeat: Infinity, delay: 3 }}
-            className="absolute bottom-[-20%] left-[-10%] w-[50%] h-[50%] bg-teal-500/10 rounded-full blur-[150px]"
-          />
-          <motion.div
-            animate={{ scale: [1, 1.2, 1], opacity: [0.03, 0.1, 0.03] }}
-            transition={{ duration: 15, repeat: Infinity, delay: 6 }}
-            className="absolute top-[40%] left-[30%] w-[30%] h-[30%] bg-cyan-400/8 rounded-full blur-[120px]"
-          />
+          {/* Global GooeyBackground now handles this */}
         </div>
 
         <motion.div style={{ y: heroY, opacity: heroOpacity as any }} className="relative z-10 text-center max-w-6xl">

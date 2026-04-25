@@ -73,7 +73,7 @@
 
 /* ─── Premium Aurora Background v4.0 ───────────────────────────────────────── */
 .aurora-bg {
-  background: var(--aurora-bg);
+  background: transparent;
   position: relative;
   overflow-x: hidden;
 }
@@ -86,21 +86,13 @@
 .aurora-bg::before {
   content: "";
   position: fixed; /* Fixed to prevent scroll repaints */
-  top: -10%;
-  left: -10%;
-  width: 120%;
-  height: 120%;
-  background:
-    radial-gradient(circle at 20% 30%, var(--aurora-1) 0%, transparent 60%),
-    radial-gradient(circle at 80% 70%, var(--aurora-2) 0%, transparent 60%),
-    radial-gradient(circle at 50% 50%, var(--aurora-3) 0%, transparent 50%),
-    radial-gradient(circle at 70% 20%, var(--aurora-4) 0%, transparent 50%);
-  animation: mesh-move 20s infinite alternate linear;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
   z-index: -1;
   pointer-events: none;
-  /* Hardware acceleration */
-  will-change: transform;
-  transform: translateZ(0);
 }
 
 /* Noise texture overlay */

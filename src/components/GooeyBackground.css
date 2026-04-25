@@ -1,0 +1,111 @@
+.gooey-container {
+  /* Using Postl's curated palette */
+  --color1: 16, 185, 129;  /* Emerald */
+  --color2: 6, 182, 212;   /* Cyan */
+  --color3: 139, 92, 246;  /* Violet */
+  --color4: 245, 158, 11;  /* Amber */
+  --color5: 20, 184, 166;  /* Teal */
+  --color-interactive: 52, 211, 153; /* Brighter Emerald */
+  
+  --circle-size: 80%;
+  --blending: screen;
+  
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.dark .gooey-container {
+  --blending: hard-light;
+  opacity: 0.8; 
+}
+
+@keyframes moveInCircle {
+  0% { transform: rotate(0deg) translate(0, 0); }
+  50% { transform: rotate(180deg) translate(100px, 0); }
+  100% { transform: rotate(360deg) translate(0, 0); }
+}
+
+@keyframes moveVertical {
+  0% { transform: translateY(-30%) scale(1); }
+  50% { transform: translateY(30%) scale(1.1); }
+  100% { transform: translateY(-30%) scale(1); }
+}
+
+@keyframes moveHorizontal {
+  0% { transform: translateX(-30%) translateY(-10%) rotate(0deg); }
+  50% { transform: translateX(30%) translateY(10%) rotate(10deg); }
+  100% { transform: translateX(-30%) translateY(-10%) rotate(0deg); }
+}
+
+.gradients-wrapper {
+  filter: url(#goo) blur(20px); /* Lowered blur for clearer "blobs" */
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.blob {
+  position: absolute;
+  width: var(--circle-size);
+  height: var(--circle-size);
+  mix-blend-mode: var(--blending);
+  opacity: 0.8;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.g1 {
+  background: radial-gradient(circle at center, rgba(var(--color1), 0.7) 0, rgba(var(--color1), 0) 50%) no-repeat;
+  top: calc(50% - var(--circle-size) / 2);
+  left: calc(50% - var(--circle-size) / 2);
+  animation: moveVertical 20s ease-in-out infinite;
+}
+
+.g2 {
+  background: radial-gradient(circle at center, rgba(var(--color2), 0.7) 0, rgba(var(--color2), 0) 50%) no-repeat;
+  top: calc(50% - var(--circle-size) / 2);
+  left: calc(50% - var(--circle-size) / 2);
+  transform-origin: calc(50% - 400px);
+  animation: moveInCircle 15s reverse infinite;
+}
+
+.g3 {
+  background: radial-gradient(circle at center, rgba(var(--color3), 0.7) 0, rgba(var(--color3), 0) 50%) no-repeat;
+  top: calc(50% - var(--circle-size) / 2 + 100px);
+  left: calc(50% - var(--circle-size) / 2 - 200px);
+  transform-origin: calc(50% + 400px);
+  animation: moveInCircle 25s linear infinite;
+}
+
+.g4 {
+  background: radial-gradient(circle at center, rgba(var(--color4), 0.7) 0, rgba(var(--color4), 0) 50%) no-repeat;
+  top: calc(50% - var(--circle-size) / 2);
+  left: calc(50% - var(--circle-size) / 2);
+  transform-origin: calc(50% - 200px);
+  animation: moveHorizontal 30s ease infinite;
+}
+
+.g5 {
+  background: radial-gradient(circle at center, rgba(var(--color5), 0.7) 0, rgba(var(--color5), 0) 50%) no-repeat;
+  width: calc(var(--circle-size) * 1.2);
+  height: calc(var(--circle-size) * 1.2);
+  top: calc(50% - var(--circle-size) / 1.5);
+  left: calc(50% - var(--circle-size) / 1.5);
+  transform-origin: calc(50% - 600px) calc(50% + 100px);
+  animation: moveInCircle 18s ease infinite;
+}
+
+.interactive {
+  background: radial-gradient(circle at center, rgba(var(--color-interactive), 0.9) 0, rgba(var(--color-interactive), 0) 50%) no-repeat;
+  width: 100%;
+  height: 100%;
+  top: -50%;
+  left: -50%;
+  opacity: 1;
+  /* High contrast for mouse follow */
+  filter: drop-shadow(0 0 50px rgba(var(--color-interactive), 0.4));
+}
