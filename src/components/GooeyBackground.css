@@ -1,15 +1,15 @@
 .gooey-container {
-  /* Using Postl's curated palette */
-  --color1: 79, 70, 229;   /* Royal Indigo */
-  --color2: 236, 72, 153;  /* Vibrant Pink */
-  --color3: 124, 58, 237;  /* High-Voltage Violet */
-  --color4: 251, 146, 60;  /* Sunset Orange */
-  --color5: 56, 189, 248;  /* Electric Sky Blue */
-  --color-interactive: 16, 185, 129; /* Signature Emerald */
+  /* Muted, Professional Palette */
+  --color1: 148, 163, 184;  /* Slate 400 */
+  --color2: 100, 116, 139;  /* Slate 500 */
+  --color3: 71, 85, 105;   /* Slate 600 */
+  --color4: 16, 185, 129;   /* Emerald (Signature, but muted) */
+  --color5: 51, 65, 85;    /* Slate 700 */
+  --color-interactive: 16, 185, 129;
   
-  --circle-size: 50%;
-  --blending: overlay; 
-  opacity: 0.4; /* Vivid enough to see in light mode */
+  --circle-size: 40%; /* Even smaller for less weight */
+  --blending: soft-light; /* Much gentler blending */
+  opacity: 0.2; /* Subdued */
 
   width: 100%;
   height: 100%;
@@ -20,7 +20,7 @@
 
 .dark .gooey-container {
   --blending: screen;
-  opacity: 1; /* Maximum "wow" in dark mode */
+  opacity: 0.5; /* Balanced for dark mode visibility */
 }
 
 @keyframes moveInCircle {
@@ -42,7 +42,7 @@
 }
 
 .gradients-wrapper {
-  filter: url(#goo) blur(20px); /* Lowered blur for clearer "blobs" */
+  filter: url(#goo) blur(60px); /* Increased blur for a wash effect */
   width: 100%;
   height: 100%;
   will-change: transform;
@@ -60,53 +60,51 @@
 }
 
 .g1 {
-  background: radial-gradient(circle at center, rgba(var(--color1), 0.7) 0, rgba(var(--color1), 0) 50%) no-repeat;
+  background: radial-gradient(circle at center, rgba(var(--color1), 0.4) 0, rgba(var(--color1), 0) 50%) no-repeat;
   top: calc(50% - var(--circle-size) / 2);
   left: calc(50% - var(--circle-size) / 2);
-  animation: moveVertical 20s ease-in-out infinite;
+  animation: moveVertical 40s ease-in-out infinite;
 }
 
 .g2 {
-  background: radial-gradient(circle at center, rgba(var(--color2), 0.7) 0, rgba(var(--color2), 0) 50%) no-repeat;
+  background: radial-gradient(circle at center, rgba(var(--color2), 0.4) 0, rgba(var(--color2), 0) 50%) no-repeat;
   top: calc(50% - var(--circle-size) / 2);
   left: calc(50% - var(--circle-size) / 2);
   transform-origin: calc(50% - 400px);
-  animation: moveInCircle 15s reverse infinite;
+  animation: moveInCircle 30s reverse infinite;
 }
 
 .g3 {
-  background: radial-gradient(circle at center, rgba(var(--color3), 0.7) 0, rgba(var(--color3), 0) 50%) no-repeat;
+  background: radial-gradient(circle at center, rgba(var(--color3), 0.4) 0, rgba(var(--color3), 0) 50%) no-repeat;
   top: calc(50% - var(--circle-size) / 2 + 100px);
   left: calc(50% - var(--circle-size) / 2 - 200px);
   transform-origin: calc(50% + 400px);
-  animation: moveInCircle 25s linear infinite;
+  animation: moveInCircle 50s linear infinite;
 }
 
 .g4 {
-  background: radial-gradient(circle at center, rgba(var(--color4), 0.7) 0, rgba(var(--color4), 0) 50%) no-repeat;
+  background: radial-gradient(circle at center, rgba(var(--color4), 0.4) 0, rgba(var(--color4), 0) 50%) no-repeat;
   top: calc(50% - var(--circle-size) / 2);
   left: calc(50% - var(--circle-size) / 2);
   transform-origin: calc(50% - 200px);
-  animation: moveHorizontal 30s ease infinite;
+  animation: moveHorizontal 60s ease infinite;
 }
 
 .g5 {
-  background: radial-gradient(circle at center, rgba(var(--color5), 0.7) 0, rgba(var(--color5), 0) 50%) no-repeat;
+  background: radial-gradient(circle at center, rgba(var(--color5), 0.4) 0, rgba(var(--color5), 0) 50%) no-repeat;
   width: calc(var(--circle-size) * 1.2);
   height: calc(var(--circle-size) * 1.2);
   top: calc(50% - var(--circle-size) / 1.5);
   left: calc(50% - var(--circle-size) / 1.5);
   transform-origin: calc(50% - 600px) calc(50% + 100px);
-  animation: moveInCircle 18s ease infinite;
+  animation: moveInCircle 36s ease infinite;
 }
 
 .interactive {
-  background: radial-gradient(circle at center, rgba(var(--color-interactive), 0.9) 0, rgba(var(--color-interactive), 0) 50%) no-repeat;
+  background: radial-gradient(circle at center, rgba(var(--color-interactive), 0.5) 0, rgba(var(--color-interactive), 0) 50%) no-repeat;
   width: 100%;
   height: 100%;
   top: -50%;
   left: -50%;
   opacity: 1;
-  /* High contrast for mouse follow */
-  filter: drop-shadow(0 0 50px rgba(var(--color-interactive), 0.4));
 }
