@@ -41,7 +41,7 @@ export const GooeyBackground: React.FC = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[-2] overflow-hidden bg-[var(--bg-color)] transition-colors duration-700">
+    <div className="fixed inset-0 pointer-events-none z-[-5] overflow-hidden bg-[var(--bg-color)] transition-colors duration-700">
       <div className="gooey-container">
         <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" className="absolute">
           <defs>
