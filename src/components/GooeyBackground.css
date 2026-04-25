@@ -7,7 +7,7 @@
   --color5: 20, 184, 166;  /* Teal */
   --color-interactive: 52, 211, 153; /* Brighter Emerald */
   
-  --circle-size: 80%;
+  --circle-size: 50%;
   --blending: overlay; 
   opacity: 0.4; /* Vivid enough to see in light mode */
 
