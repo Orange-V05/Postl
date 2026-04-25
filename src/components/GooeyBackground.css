@@ -1,11 +1,11 @@
 .gooey-container {
   /* Using Postl's curated palette */
-  --color1: 16, 185, 129;  /* Emerald */
-  --color2: 6, 182, 212;   /* Cyan */
-  --color3: 139, 92, 246;  /* Violet */
-  --color4: 245, 158, 11;  /* Amber */
-  --color5: 20, 184, 166;  /* Teal */
-  --color-interactive: 52, 211, 153; /* Brighter Emerald */
+  --color1: 79, 70, 229;   /* Royal Indigo */
+  --color2: 236, 72, 153;  /* Vibrant Pink */
+  --color3: 124, 58, 237;  /* High-Voltage Violet */
+  --color4: 251, 146, 60;  /* Sunset Orange */
+  --color5: 56, 189, 248;  /* Electric Sky Blue */
+  --color-interactive: 16, 185, 129; /* Signature Emerald */
   
   --circle-size: 50%;
   --blending: overlay; 
