@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaCheck, FaRegCopy, FaMagic, FaRedo, FaClock, FaHashtag, FaLightbulb, FaLayerGroup, FaChevronLeft, FaChevronRight, FaFire, FaChartLine } from 'react-icons/fa';
+import { FaCheck, FaRegCopy, FaMagic, FaRedo, FaClock, FaHashtag, FaLightbulb, FaLayerGroup, FaChevronLeft, FaChevronRight, FaFire, FaChartLine, FaDownload } from 'react-icons/fa';
 
 interface PostResultViewProps {
   result: string;
@@ -32,6 +32,35 @@ interface PostResultViewProps {
 const platformLabels: Record<string, string> = {
   twitter: 'Twitter / X', instagram: 'Instagram', linkedin: 'LinkedIn',
   tiktok: 'TikTok', email: 'Email', blog: 'Blog', ad: 'Ad Copy',
+};
+
+const analyzeContent = (text: string) => {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  const sentences = text.split(/[.!?]+/).filter(Boolean);
+  const hashtags = text.match(/#[\w-]+/g) || [];
+  const questions = text.match(/\?/g)?.length || 0;
+  const readMinutes = Math.max(1, Math.ceil(words.length / 220));
+  const momentum = Math.min(100, Math.round(45 + hashtags.length * 5 + questions * 10 + Math.min(words.length, 160) / 4));
+
+  return {
+    words: words.length,
+    chars: text.length,
+    sentences: sentences.length,
+    hashtags: hashtags.length,
+    readMinutes,
+    momentum,
+  };
+};
+
+const downloadMarkdown = (text: string, platform: string, category: string) => {
+  const body = `# POSTL Export\n\n- Platform: ${platform}\n- Format: ${category}\n- Exported: ${new Date().toLocaleString()}\n\n---\n\n${text}\n`;
+  const blob = new Blob([body], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `postl-${platform}-${Date.now()}.md`;
+  link.click();
+  URL.revokeObjectURL(url);
 };
 
 /* ─── Typewriter Hook ────────────────────────────────────────────────────── */
@@ -237,6 +266,7 @@ const PostResultView: React.FC<PostResultViewProps> = ({
   const variants = allVariants && allVariants.length > 0 ? allVariants : (result ? [result] : []);
   const currentText = variants[activeVariant] || result || '';
   const { displayed, isTyping } = useTypewriter(currentText);
+  const contentStats = analyzeContent(currentText);
 
   // Reset active variant on new results
   useEffect(() => {
@@ -312,8 +342,35 @@ const PostResultView: React.FC<PostResultViewProps> = ({
                 >
                   {copied ? <FaCheck size={12} /> : <FaRegCopy size={12} className="group-hover/copy:rotate-12 transition-transform" />}
                 </button>
+                <button
+                  onClick={() => downloadMarkdown(currentText, platform, category)}
+                  className="p-2.5 bg-[var(--input-bg)] backdrop-blur-md rounded-xl hover:bg-cyan-500 hover:text-white text-cyan-500 transition-all border border-[var(--input-border)]"
+                  title="Export Markdown"
+                >
+                  <FaDownload size={12} />
+                </button>
               </div>
             </div>
+
+            {!isTyping && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4"
+              >
+                {[
+                  ['Momentum', `${contentStats.momentum}%`],
+                  ['Words', contentStats.words.toString()],
+                  ['Hashtags', contentStats.hashtags.toString()],
+                  ['Read', `${contentStats.readMinutes} min`],
+                ].map(([label, value]) => (
+                  <div key={label} className="magnetic-sheen rounded-2xl border border-[var(--input-border)] p-3">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-[var(--muted-color)]">{label}</p>
+                    <p className="mt-1 font-display text-lg font-black text-[var(--text-color)]">{value}</p>
+                  </div>
+                ))}
+              </motion.div>
+            )}
 
             {/* Variant Tabs (if multiple) */}
             {variants.length > 1 && (
