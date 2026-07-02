@@ -2,9 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 export const OPEN_MODELS = [
-  { id: 'google/gemma-3-27b-it:free', name: 'Gemma 3 27B (Free)', type: 'Reliable' },
-  { id: 'google/gemini-2.0-flash-001', name: 'Gemini 2.0 Flash', type: 'Fast' },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 (Pro)', type: 'Advanced' },
+  { id: 'gemma4:e2b', name: 'Gemma 4 (e2b) - Local', type: 'Local' },
 ];
 
 interface ModelSelectorProps {
