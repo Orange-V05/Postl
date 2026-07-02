@@ -22,8 +22,14 @@ export default defineConfig(({ mode }) => ({
             if (id.includes('react') || id.includes('react-dom')) {
               return 'vendor';
             }
+            if (id.includes('firebase') || id.includes('@firebase')) {
+              return 'firebase';
+            }
             if (id.includes('framer-motion') || id.includes('lucide-react') || id.includes('react-icons')) {
               return 'ui';
+            }
+            if (id.includes('axios') || id.includes('react-router-dom') || id.includes('@remix-run') || id.includes('zustand')) {
+              return 'app-core';
             }
             return 'libs';
           }

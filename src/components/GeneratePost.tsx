@@ -62,9 +62,38 @@ const platformSuggestions: Record<string, string[]> = {
   ],
 };
 
+const platformIntelligence: Record<string, { limit: string; primaryGoal: string; winningPattern: string; visualCue: string }> = {
+  twitter: { limit: '280 chars', primaryGoal: 'Spark replies and shares fast', winningPattern: 'Hook → sharp insight → punchy CTA', visualCue: 'Bold quote card or creator portrait' },
+  instagram: { limit: '2,200 chars', primaryGoal: 'Stop the scroll and save-worthy value', winningPattern: 'Relatable opener → mini story → hashtags', visualCue: 'High contrast lifestyle / carousel cover' },
+  linkedin: { limit: '3,000 chars', primaryGoal: 'Build authority and trust', winningPattern: 'Personal tension → lesson → practical takeaway', visualCue: 'Clean editorial business visual' },
+  tiktok: { limit: '60 sec script', primaryGoal: 'Win the first 3 seconds', winningPattern: 'POV hook → pattern interrupt → payoff', visualCue: 'Dynamic vertical video scene' },
+  email: { limit: 'Inbox-ready', primaryGoal: 'Drive opens and clicks', winningPattern: 'Subject → problem → benefit → CTA', visualCue: 'Minimal product/newsletter hero' },
+  blog: { limit: 'SEO structure', primaryGoal: 'Rank and educate deeply', winningPattern: 'Thesis → outline → examples → next steps', visualCue: 'Editorial feature image' },
+  ad: { limit: 'Conversion copy', primaryGoal: 'Turn attention into action', winningPattern: 'Pain → promise → proof → urgency', visualCue: 'Performance ad creative' },
+};
+
+const getPromptReadiness = (prompt: string) => {
+  const words = prompt.trim().split(/\s+/).filter(Boolean).length;
+  const score = Math.min(100, Math.round((words / 18) * 70 + (/[?!.]/.test(prompt) ? 10 : 0) + (prompt.length > 80 ? 20 : 0)));
+  const label = score >= 80 ? 'Launch-ready' : score >= 50 ? 'Strong brief' : score >= 25 ? 'Needs detail' : 'Idea seed';
+  return { words, score, label };
+};
+
+const fallbackPrefs = {
+  selectedModel: 'google/gemma-3-27b-it:free',
+  creativity: 0.7,
+  tone: 'professional' as const,
+  fontSize: 28,
+  darkMode: true,
+};
+
 const GeneratePost: React.FC = () => {
   const auth = useContext(AuthContext);
-  const { prefs, setPrefs, addRecentPrompt } = useStore();
+  const store = useStore();
+  const prefs = store?.prefs || fallbackPrefs;
+  const setPrefs = store?.setPrefs || (() => undefined);
+  const addRecentPrompt = store?.addRecentPrompt || (() => undefined);
+  const recentPrompts = store?.recentPrompts || [];
 
   const [prompt, setPrompt] = useState('');
   const [platform, setPlatform] = useState<Platform>('twitter');
@@ -239,6 +268,8 @@ const GeneratePost: React.FC = () => {
   };
 
   const suggestions = platformSuggestions[platform] || platformSuggestions.twitter;
+  const intelligence = platformIntelligence[platform];
+  const readiness = getPromptReadiness(prompt);
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
@@ -269,6 +300,56 @@ const GeneratePost: React.FC = () => {
             fontSize={prefs.fontSize}
             setFontSize={(s) => setPrefs({ fontSize: s })}
           />
+
+          {/* Launch Brief */}
+          <motion.div
+            layout
+            className="mb-6 overflow-hidden rounded-2xl border border-[var(--input-border)] bg-[var(--input-bg)]/70 p-4"
+          >
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.28em] text-emerald-500">Launch Brief</p>
+                <h4 className="mt-1 font-display text-sm font-black uppercase tracking-widest text-[var(--text-color)]">
+                  {readiness.label}
+                </h4>
+              </div>
+              <div className="relative h-12 w-12 shrink-0 rounded-2xl bg-black/10 p-1 dark:bg-white/5">
+                <svg viewBox="0 0 42 42" className="h-full w-full -rotate-90">
+                  <circle cx="21" cy="21" r="17" fill="none" stroke="rgba(148,163,184,.22)" strokeWidth="4" />
+                  <motion.circle
+                    cx="21" cy="21" r="17" fill="none" stroke="url(#readinessGradient)" strokeWidth="4" strokeLinecap="round"
+                    strokeDasharray="106.8" animate={{ strokeDashoffset: 106.8 - (readiness.score / 100) * 106.8 }}
+                  />
+                  <defs><linearGradient id="readinessGradient"><stop stopColor="#10b981" /><stop offset="1" stopColor="#06b6d4" /></linearGradient></defs>
+                </svg>
+                <span className="absolute inset-0 grid place-items-center text-[10px] font-black text-[var(--text-color)]">{readiness.score}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-[10px]">
+              {[
+                ['Platform rule', intelligence.limit],
+                ['Goal', intelligence.primaryGoal],
+                ['Pattern', intelligence.winningPattern],
+                ['Visual cue', intelligence.visualCue],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-[var(--input-border)] bg-[var(--panel-bg)]/60 p-3">
+                  <p className="mb-1 font-black uppercase tracking-widest text-[var(--muted-color)]">{label}</p>
+                  <p className="font-bold leading-snug text-[var(--text-color)]">{value}</p>
+                </div>
+              ))}
+            </div>
+
+            {recentPrompts.length > 0 && !prompt && (
+              <button
+                type="button"
+                onClick={() => setPrompt(recentPrompts[0])}
+                className="mt-3 w-full rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-emerald-500 transition hover:bg-emerald-500/15"
+              >
+                Reuse last winning prompt
+              </button>
+            )}
+          </motion.div>
 
           {/* Smart Suggestions */}
           {!prompt && (
