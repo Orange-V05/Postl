@@ -553,6 +553,12 @@ router.post("/generate-post", authenticate, async (req, res) => {
   if (error) return res.status(400).json({ error: error.details[0].message });
 
   let { prompt, topic, platform, contentType, tone, creativity, variants, model } = value;
+  // Ensure numeric fields have sane defaults
+  const safeCreativity = Number.isFinite(Number(creativity)) ? Number(creativity) : 0;
+  const safeVariants = Number.isFinite(Number(variants)) && Number(variants) > 0 ? Number(variants) : 1;
+  // Overwrite variables used later
+  creativity = safeCreativity;
+  variants = safeVariants;
   
   const startTime = Date.now();
   prompt = await refineUserPrompt(prompt, topic);
@@ -587,6 +593,7 @@ router.post("/generate-post", authenticate, async (req, res) => {
           body: JSON.stringify({
             model: ollamaModel,
             temperature: Number(Math.min(1.2, Number(creativity) + (i * 0.1)).toFixed(2)),
+            stream: false,
             max_tokens: 800,
             messages: [{ role: "user", content: `INSTRUCTIONS:\n${systemPrompt}\n\nCONTENT REQUEST:\nCreate a ${contentType} about: ${prompt}${i > 0 ? `\n\n(Generate a DIFFERENT angle/approach than the previous version. Variation #${i + 1}.)` : ''}` }]
           }),
@@ -600,45 +607,48 @@ router.post("/generate-post", authenticate, async (req, res) => {
           throw new Error(`Ollama generation failed: ${response.status}`);
         }
         const data = await response.json();
-        return data.message?.content || "";
+        const resultContent = data.message?.content || data.response || "";
+        return resultContent;
       })
     );
     const rawResults = await Promise.allSettled(variantPromises);
-    let results = rawResults.filter(r => r.status === 'fulfilled' && r.value).map(r => cleanAIResult(r.value));
+    const results = rawResults
+      .filter(r => r.status === 'fulfilled' && r.value)
+      .map(r => cleanAIResult(r.value));
     if (results.length === 0) {
-        
-        const primaryResult = results[0];
-        const strategy = generateStrategyBrief(platform, contentType, primaryResult);
-        const elapsedMs = Date.now() - startTime;
-
-        const responseData = {
-          results,
-          strategy,
-          meta: {
-            model: model,
-            engine: "cloud",
-            variants: results.length,
-            elapsedMs,
-            platform,
-            contentType,
-            tone,
-          },
-        };
-        
-        cacheSet(cacheKey, responseData);
-        return res.json(responseData);
+      console.error('[Ollama AI] No results returned from model');
+      return res.status(500).json({ error: 'Ollama generation produced no results.' });
+    }
+    const primaryResult = results[0];
+    const strategy = generateStrategyBrief(platform, contentType, primaryResult);
+    const elapsedMs = Date.now() - startTime;
+    const responseData = {
+      results,
+      strategy,
+      meta: {
+        model: ollamaModel,
+        engine: 'ollama',
+        variants: results.length,
+        elapsedMs,
+        platform,
+        contentType,
+        tone,
+      },
+    };
+    cacheSet(cacheKey, responseData);
+    return res.json(responseData);
       } catch (err) {
-        console.error("[Fatal] Cloud AI Engine Failure:", err.message);
+        console.error("[Fatal] Ollama AI Engine Failure:", err.message);
         if (err.message.includes("429")) {
            return res.status(500).json({
-              error: "API Provider is experiencing extreme high traffic and rate-limits on Free models. Please switch to Gemini 2.0 or try again in a few minutes.",
-              suggestion: "High queue times for Llama or Gemma Free."
+              error: "AI provider is experiencing extreme high traffic and rate-limits. Please try again later or switch to a lighter model.",
+              suggestion: "High queue times for Gemma 4.0. Consider using Gemma 2b or reduce variants."
            });
         }
         const detail = (err.message || "Unknown").substring(0, 100);
         return res.status(500).json({ 
-          error: `Cloud AI request failed: ${detail}`,
-          suggestion: "Check OpenRouter API key validity."
+          error: `Ollama request failed: ${detail}`,
+          suggestion: "Check that Ollama is running, the model name is correct, and OLLAMA_URL is reachable."
         });
       }
     }
@@ -653,7 +663,6 @@ app.use("/", router);
 if (!process.env.LAMBDA_TASK_ROOT && !process.env.NETLIFY) {
   app.listen(PORT, async () => {
     console.log(`[POSTL-CORE v4.0] Backend running on http://localhost:${PORT}`);
-    await testOpenRouterConnection();
   });
 }
 
