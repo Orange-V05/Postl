@@ -11,6 +11,8 @@ import path from "path";
 import crypto from "crypto";
 import { fileURLToPath } from "url";
 
+dotenv.config({ path: path.join(__dirname, '.env') });
+// Also load root .env if present
 dotenv.config();
 
 // Power Debug: Clean and sanitize API Keys
@@ -552,9 +554,6 @@ router.post("/generate-post", authenticate, async (req, res) => {
 
   let { prompt, topic, platform, contentType, tone, creativity, variants, model } = value;
   
-  // Dynamic fallback for model
-  if (!model) model = "google/gemma-3-27b-it:free";
-  
   const startTime = Date.now();
   prompt = await refineUserPrompt(prompt, topic);
   
@@ -567,137 +566,46 @@ router.post("/generate-post", authenticate, async (req, res) => {
     return res.json({ ...cached, cached: true });
   }
 
-  // Cloud AI (OpenRouter) — PRIMARY ENGINE
-  let cloudError = null;
-  if (!process.env.OPENROUTER_API_KEY) {
-      console.warn("[Cloud AI] Warning: OPENROUTER_API_KEY missing. Falling back to Local AI Engine.");
-    } else {
-      try {
-        console.log(`[Cloud AI v4] Generating ${variants}x ${tone} ${contentType} for ${platform}...`);
-        
-        const systemPrompt = buildSystemPrompt(platform, contentType, tone, topic, platformRules);
-        
-        // Generate requested number of variants
-        const variantPromises = Array.from({ length: variants }, (_, i) => 
-          callWithRetry(async () => {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 90000);
-            
-            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://postl-v4.vercel.app",
-                "Origin": "https://postl-v4.vercel.app",
-                "X-Title": "Postl Content Intelligence",
-              },
-              body: JSON.stringify({
-                model: model || "google/gemma-3-27b-it:free",
-                temperature: Number(Math.min(1.2, Number(creativity) + (i * 0.1)).toFixed(2)), 
-                max_tokens: 800,
-                messages: [
-                  {
-                    role: "user",
-                    content: `INSTRUCTIONS:\n${systemPrompt}\n\nCONTENT REQUEST:\nCreate a ${contentType} about: ${prompt}${i > 0 ? `\n\n(Generate a DIFFERENT angle/approach than the previous version. Variation #${i + 1}.)` : ''}`,
-                  },
-                ],
-              }),
-              signal: controller.signal,
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) {
-              const errorText = await response.text();
-              console.error(`[Cloud AI Generation Error] Status: ${response.status}, Body: ${errorText}`);
-              
-              if (response.status === 429) {
-                throw new Error("429_RATE_LIMIT: " + errorText.substring(0, 50));
-              }
+  // Using local Ollama model via OLLAMA_URL
+  const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+  const ollamaModel = process.env.OLLAMA_MODEL;
+  if (!ollamaModel) {
+    console.error("[Config] OLLAMA_MODEL is missing.");
+    return res.status(500).json({ error: "Missing OLLAMA_MODEL environment variable." });
+  }
 
-              // RESILIENCE: Try a hard fallback model if the primary fails
-              if (model !== "google/gemma-3-27b-it:free") {
-                console.warn("[Cloud AI Resilience] Primary model failed. Attempting Emergency Fallback (Mistral Free)...");
-                model = "google/gemma-3-27b-it:free";
-                throw new Error("RETRY_WITH_FALLBACK");
-              }
-              
-              throw new Error(`Cloud AI core failed: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            return data.choices[0]?.message?.content || "";
-          })
-        );
+  try {
+    console.log(`[Ollama AI] Generating ${variants}x ${tone} ${contentType} for ${platform} using model ${ollamaModel}...`);
+    const systemPrompt = buildSystemPrompt(platform, contentType, tone, topic, platformRules);
+    const variantPromises = Array.from({ length: variants }, (_, i) =>
+      callWithRetry(async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 90000);
+        const response = await fetch(`${ollamaUrl}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: ollamaModel,
+            temperature: Number(Math.min(1.2, Number(creativity) + (i * 0.1)).toFixed(2)),
+            max_tokens: 800,
+            messages: [{ role: "user", content: `INSTRUCTIONS:\n${systemPrompt}\n\nCONTENT REQUEST:\nCreate a ${contentType} about: ${prompt}${i > 0 ? `\n\n(Generate a DIFFERENT angle/approach than the previous version. Variation #${i + 1}.)` : ''}` }]
+          }),
+          signal: controller.signal,
+        });
         
-        const rawResults = await Promise.allSettled(variantPromises);
-        let results = rawResults
-          .filter(r => r.status === 'fulfilled' && r.value)
-          .map(r => cleanAIResult(r.value));
-
-        if (results.length === 0) {
-          // Log raw results for debugging
-          console.warn('[AI Generation] All variants empty. Raw results:', rawResults);
-          // Attempt fallback generation with secondary model if not already using it
-          if (model !== 'google/gemma-2.0') {
-            console.log('[AI Generation] Attempting fallback model google/gemma-2.0');
-            const fallbackPromises = Array.from({ length: variants }, (_, i) =>
-              callWithRetry(async () => {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 90000);
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                  method: 'POST',
-                  headers: {
-                    Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                    'Content-Type': 'application/json',
-                    'HTTP-Referer': 'https://postl-v4.vercel.app',
-                    'Origin': 'https://postl-v4.vercel.app',
-                    'X-Title': 'Postl Content Intelligence',
-                  },
-                  body: JSON.stringify({
-                    model: 'google/gemma-2.0',
-                    temperature: Number(Math.min(1.2, Number(creativity) + (i * 0.1)).toFixed(2)),
-                    max_tokens: 800,
-                    messages: [
-                      {
-                        role: 'user',
-                        content: `INSTRUCTIONS:\n${systemPrompt}\n\nCONTENT REQUEST:\nCreate ${contentType} about: ${prompt}${i > 0 ? `\n\n(Generate a DIFFERENT angle/approach than the previous version. Variation #${i + 1}.)` : ''}`,
-                      },
-                    ],
-                  }),
-                  signal: controller.signal,
-                });
-                clearTimeout(timeoutId);
-                if (!response.ok) {
-                  const errTxt = await response.text();
-                  console.error('[Fallback AI Generation Error]', response.status, errTxt);
-                  throw new Error(`Fallback generation failed: ${response.status}`);
-                }
-                const data = await response.json();
-                return data.choices[0]?.message?.content || '';
-              })
-            );
-            const fallbackRaw = await Promise.allSettled(fallbackPromises);
-            const fallbackResults = fallbackRaw
-              .filter(r => r.status === 'fulfilled' && r.value)
-              .map(r => cleanAIResult(r.value));
-            if (fallbackResults.length > 0) {
-              results = fallbackResults;
-            } else {
-              throw new Error('All variant generations returned empty after fallback.');
-            }
-          } else {
-            throw new Error('All variant generations returned empty.');
-          }
+        clearTimeout(timeoutId);
+        if (!response.ok) {
+          const errText = await response.text();
+          console.error(`[Ollama AI Generation Error] Status: ${response.status}, Body: ${errText}`);
+          throw new Error(`Ollama generation failed: ${response.status}`);
         }
-        
-        if (results.length === 0) {
-          if (rawResults.some(r => r.status === 'rejected' && r.reason && r.reason.message && r.reason.message.includes('429'))) {
-             throw new Error("429_RATE_LIMIT");
-          }
-          throw new Error("All variant generations returned empty.");
-        }
+        const data = await response.json();
+        return data.message?.content || "";
+      })
+    );
+    const rawResults = await Promise.allSettled(variantPromises);
+    let results = rawResults.filter(r => r.status === 'fulfilled' && r.value).map(r => cleanAIResult(r.value));
+    if (results.length === 0) {
         
         const primaryResult = results[0];
         const strategy = generateStrategyBrief(platform, contentType, primaryResult);
