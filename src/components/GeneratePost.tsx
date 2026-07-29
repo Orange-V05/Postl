@@ -1,11 +1,11 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { FaMagic, FaBolt } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../context/AuthContext';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useStore } from '../store/useStore';
+import { generatePost, ApiClientError, GenerationVariant } from '../api/client';
 
 // Sub-components
 import ModelSelector from './studio/ModelSelector';
@@ -112,8 +112,6 @@ const GeneratePost: React.FC = () => {
   const [genTimer, setGenTimer] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
-
   // Generation timer
   useEffect(() => {
     if (loading) {
@@ -141,7 +139,7 @@ const GeneratePost: React.FC = () => {
 
     try {
       const token = await auth.getToken();
-      const response = await axios.post(`${API_BASE_URL}/generate-post`, {
+      const data = await generatePost(token, {
         prompt,
         topic,
         platform,
@@ -149,30 +147,36 @@ const GeneratePost: React.FC = () => {
         tone: prefs.tone,
         creativity: prefs.creativity,
         variants: 1,
-        model: prefs.selectedModel,
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        timeout: 60000,
-      });
+        modelId: prefs.selectedModel,
+        objective: 'engagement',
+      }, 60000);
 
-      const results = response.data.results || [];
-      const primaryResult = results[0] || 'No content returned from AI Engine.';
-      const imgP = response.data.image_prompt || prompt;
+      const variants = data.variants || [];
+      const primaryVariant = variants[0];
+      const primaryResult = primaryVariant?.content || 'No content returned from AI Engine.';
+      const imgP = prompt;
 
       setImagePrompt(imgP);
       setResult(primaryResult);
-      setAllVariants(results);
+      setAllVariants(variants.map((variant: GenerationVariant) => variant.content));
 
-      if (response.data.strategy) {
-        setStrategyBrief(response.data.strategy);
-      }
+      setStrategyBrief({
+        framework: primaryVariant?.strategy?.framework,
+        tip: primaryVariant?.rationale,
+        hashtags: primaryVariant?.hashtags ? Object.entries(primaryVariant.hashtags).flatMap(([, tags]) => (tags || []).map((tag) => `#${tag}`)).join(' ') : null,
+        bestTime: `${data.benchmarkTiming.recommendation} (${data.benchmarkTiming.source})`,
+        engagementScore: primaryVariant?.analysis?.score ?? null,
+        charCount: primaryResult.length,
+        maxChars: primaryVariant?.analysis?.factors?.find((factor) => factor.key === 'length')?.max,
+      });
 
-      if (response.data.meta) {
-        setMeta(response.data.meta);
-        setElapsedMs(response.data.meta.elapsedMs || 0);
-      }
+      setMeta(primaryVariant?.provider ? {
+        model: primaryVariant.provider.model,
+        engine: primaryVariant.provider.name,
+        variants: variants.length,
+        elapsedMs: primaryVariant.provider.latencyMs,
+      } : null);
+      setElapsedMs(primaryVariant?.provider?.latencyMs || 0);
 
       // Save to recent prompts
       addRecentPrompt(prompt);
@@ -187,7 +191,7 @@ const GeneratePost: React.FC = () => {
         contentType,
         tone: prefs.tone,
         model: prefs.selectedModel,
-        engagementScore: response.data.strategy?.engagementScore || null,
+        platformFitScore: primaryVariant?.analysis?.score ?? null,
         timestamp: serverTimestamp()
       };
 
@@ -195,8 +199,8 @@ const GeneratePost: React.FC = () => {
 
     } catch (error: any) {
       console.error("[Connectivity Error] Full Detail:", error);
-      const errorMsg = error.response?.data?.error || error.message;
-      const diagnostic = !error.response ? " (Server Unreachable - Is Backend Running?)" : "";
+      const errorMsg = error instanceof ApiClientError ? `${error.message} (${error.code})` : error.message;
+      const diagnostic = error instanceof ApiClientError ? ` Request ID: ${error.requestId || 'n/a'}` : ' (Server Unreachable - Is Backend Running?)';
       setResult(`AI Engine Error: ${errorMsg}${diagnostic}.`);
     } finally {
       setLoading(false);
@@ -210,7 +214,7 @@ const GeneratePost: React.FC = () => {
 
     try {
       const token = await auth.getToken();
-      const response = await axios.post(`${API_BASE_URL}/generate-post`, {
+      const data = await generatePost(token, {
         prompt,
         topic,
         platform,
@@ -218,21 +222,29 @@ const GeneratePost: React.FC = () => {
         tone: prefs.tone,
         creativity: prefs.creativity,
         variants: 3,
-        model: prefs.selectedModel,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-        timeout: 90000,
-      });
+        modelId: prefs.selectedModel,
+        objective: 'engagement',
+      }, 90000);
 
-      const results = response.data.results || [];
-      if (results.length > 0) {
-        setAllVariants(results);
-        setResult(results[0]);
-        if (response.data.strategy) setStrategyBrief(response.data.strategy);
-        if (response.data.meta) {
-          setMeta(response.data.meta);
-          setElapsedMs(response.data.meta.elapsedMs || 0);
-        }
+      const variants = data.variants || [];
+      if (variants.length > 0) {
+        setAllVariants(variants.map((variant: GenerationVariant) => variant.content));
+        setResult(variants[0].content);
+        setStrategyBrief({
+          framework: variants[0].strategy?.framework,
+          tip: variants[0].rationale,
+          hashtags: variants[0].hashtags ? Object.entries(variants[0].hashtags).flatMap(([, tags]) => (tags || []).map((tag) => `#${tag}`)).join(' ') : null,
+          bestTime: `${data.benchmarkTiming.recommendation} (${data.benchmarkTiming.source})`,
+          engagementScore: variants[0].analysis?.score ?? null,
+          charCount: variants[0].content.length,
+        });
+        setMeta(variants[0].provider ? {
+          model: variants[0].provider.model,
+          engine: variants[0].provider.name,
+          variants: variants.length,
+          elapsedMs: variants[0].provider.latencyMs,
+        } : null);
+        setElapsedMs(variants[0].provider?.latencyMs || 0);
       }
     } catch (error: any) {
       console.error("[Variants Error]:", error.message);

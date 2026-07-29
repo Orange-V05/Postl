@@ -1,11 +1,16 @@
 # dependencies
 /node_modules/
+backend/node_modules/
 
 # environment variables
 .env
+.env.*
+!.env.example
 
 # production build output
 /build/
+/dist/
+/dist-ssr/
 
 # logs
 npm-debug.log*
@@ -24,10 +29,6 @@ Thumbs.db
 *.njsproj
 *.sln
 
-# Vite build output
-/dist/
-/dist-ssr/
-
 # Python / AI Server environments
 venv/
 env/
@@ -35,10 +36,18 @@ env/
 __pycache__/
 *.pyc
 
-# Local env files
-.env.*
-!.env.example
-
-# Secrets
-firebase-key.json
-service-account.json
+# Secrets and local credentials
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.p8
+*firebase-key*.json
+*service-account*.json
+*credential*.json
+*credentials*.json
+**/firebase-key.json
+**/service-account.json
+**/*service-account*.json
+**/*firebase-key*.json

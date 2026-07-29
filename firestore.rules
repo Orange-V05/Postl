@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function ownsExisting() { return signedIn() && resource.data.userId == request.auth.uid; }
+    function ownsIncoming() { return signedIn() && request.resource.data.userId == request.auth.uid; }
+    function userIdUnchanged() { return !('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId; }
+    function validString(field, max) { return !(field in request.resource.data) || (request.resource.data[field] is string && request.resource.data[field].size() <= max); }
+
+    match /posts/{postId} {
+      allow read: if ownsExisting();
+      allow create: if ownsIncoming()
+        && validString('content', 12000)
+        && validString('prompt', 3000)
+        && validString('platform', 40)
+        && validString('contentType', 80)
+        && validString('status', 40);
+      allow update: if ownsExisting() && ownsIncoming() && userIdUnchanged()
+        && validString('content', 12000)
+        && validString('status', 40);
+      allow delete: if ownsExisting();
+    }
+
+    match /brands/{brandId} {
+      allow read: if ownsExisting();
+      allow create: if ownsIncoming()
+        && validString('brandName', 120)
+        && validString('description', 2000)
+        && validString('sampleContent', 12000)
+        && validString('complianceNotes', 3000);
+      allow update: if ownsExisting() && ownsIncoming() && userIdUnchanged();
+      allow delete: if ownsExisting();
+    }
+
+    match /campaigns/{campaignId} {
+      allow read: if ownsExisting();
+      allow create: if ownsIncoming()
+        && validString('name', 160)
+        && validString('objective', 80)
+        && validString('keyMessage', 3000)
+        && validString('CTA', 500);
+      allow update: if ownsExisting() && ownsIncoming() && userIdUnchanged();
+      allow delete: if ownsExisting();
+    }
+
+    match /feedback/{feedbackId} {
+      allow read: if ownsExisting();
+      allow create: if ownsIncoming() && validString('feedback', 40);
+      allow update, delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read, update: if signedIn() && userId == request.auth.uid;
+      allow create: if signedIn() && userId == request.auth.uid;
+      allow delete: if false;
+    }
+  }
+}

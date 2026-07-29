@@ -28,7 +28,7 @@ interface AppState {
 }
 
 const defaultPrefs: UserPreferences = {
-  selectedModel: 'google/gemma-3-27b-it:free',
+  selectedModel: 'local-gemma',
   creativity: 0.7,
   tone: 'professional',
   fontSize: 28,

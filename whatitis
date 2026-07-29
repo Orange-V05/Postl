@@ -1,0 +1,1522 @@
+# whatitis: Complete Understanding of the POSTL Project
+
+Generated on 2026-07-29 after reviewing the project at `D:\postl`.
+
+## 1. High-level identity
+
+POSTL is a web application positioned as a premium "Content Intelligence OS" for creators, marketers, founders, and social media users. Its purpose is to turn a user prompt or idea into optimized content for different platforms and formats. The app combines a polished React frontend, Firebase authentication/storage, and a Node/Express AI orchestration backend. There is also a separate Python Flask local AI server intended as a local/offline generation option.
+
+The product language throughout the project is intentionally premium and dramatic: "creator command center", "neural studio", "POSTL Core", "Ferrari aesthetic", "Content Intelligence OS", "Brand Voice DNA", and similar phrases. The main practical functionality is AI-assisted content generation with platform, format, topic, tone, creativity, variants, result display, history, feedback, and analytics.
+
+## 2. Repository structure
+
+Important top-level files and folders:
+
+- `src/`: React + TypeScript frontend application.
+- `src/components/`: shared UI and generation components.
+- `src/components/studio/`: small selector/input/result components used by the generation studio.
+- `src/context/`: authentication context.
+- `src/pages/`: route-level pages.
+- `src/store/`: Zustand persisted app state.
+- `src/mocks/`: MSW mock server for tests.
+- `backend/`: Node/Express backend.
+- `backend/LocalAIServer/`: Python Flask + Transformers local text generation server.
+- `netlify/functions/api.js`: Netlify serverless wrapper around the Express app.
+- `cypress/`: end-to-end tests and Cypress support files.
+- `package.json`: frontend package/scripts/dependencies.
+- `backend/package.json`: backend package/scripts/dependencies.
+- `vite.config.ts`: Vite, build, test, and dev proxy configuration.
+- `tailwind.config.js`, `postcss.config.js`: Tailwind/PostCSS setup.
+- `netlify.toml`: Netlify build/functions/redirect setup.
+- `vercel.json`: Vercel SPA build/rewrite setup.
+- `.env.example`, `backend/.env.example`: environment variable templates.
+- `postl_architecture_analysis.md`: previous architecture/vision notes for the project.
+- `background.mp4`, `tree.jpg`: binary media assets present in the project root.
+- `backend/firebase-key.json`, `backend/service-account.json`: Firebase service account/key files present. These are private credential-style files and should not normally be committed.
+- `package-lock.json`, `backend/package-lock.json`, `node_modules/`, `.git/`, `tsconfig.tsbuildinfo`: generated/dependency/version-control artifacts, not application logic.
+
+## 3. Technology stack
+
+Frontend:
+
+- React 18.
+- TypeScript.
+- Vite.
+- React Router v6.
+- Firebase client SDK for Auth, Analytics, Firestore.
+- Zustand for persisted UI/user preferences and usage stats.
+- Tailwind CSS plus large custom CSS design system in `index.css`.
+- Framer Motion for animations.
+- React Icons and Lucide React for icons.
+- Axios for HTTP requests.
+- Vitest + Testing Library + jest-axe for unit/accessibility tests.
+- Cypress for E2E tests.
+
+Backend:
+
+- Node.js ESM modules.
+- Express 5.
+- CORS.
+- Helmet.
+- express-rate-limit.
+- Joi validation.
+- Firebase Admin SDK for ID token verification.
+- dotenv.
+- crypto for cache key hashing.
+- Native `fetch` for AI provider calls.
+- serverless-http for Netlify function wrapping.
+
+Local AI server:
+
+- Python Flask.
+- flask-cors.
+- Hugging Face Transformers.
+- PyTorch.
+- `gpt2-large` text-generation pipeline.
+
+AI integrations reflected in the code/docs:
+
+- Current backend generation path uses local Ollama by default, through `OLLAMA_URL` and `OLLAMA_MODEL`.
+- Fallback path uses Hugging Face Inference API if `HF_TOKEN` exists.
+- Prompt refinement and connectivity-check helpers use OpenRouter if `OPENROUTER_API_KEY` exists.
+- The previous architecture document describes OpenRouter/Mistral as the primary engine, but the actual current `backend/server.js` uses Ollama as primary generation.
+- The local Python server uses GPT-2 Large and is separate from the current Express Ollama path.
+
+## 4. Frontend entry and routing
+
+### `index.html`
+
+Defines the HTML shell:
+
+- `div#root` is the React mount point.
+- Loads `/src/main.tsx` as a module.
+- SEO/OpenGraph/Twitter metadata describe POSTL as "The Content Intelligence OS".
+- Uses a data URL favicon with a dark square and green "P".
+- Preconnects to Google Fonts and loads Inter, Space Grotesk, and JetBrains Mono.
+
+### `src/main.tsx`
+
+Bootstraps React:
+
+- Imports React, ReactDOM, BrowserRouter, App, AuthProvider, and global CSS.
+- Throws if `#root` does not exist.
+- Renders:
+  - `React.StrictMode`
+  - `BrowserRouter`
+  - `AuthProvider`
+  - `App`
+- Contains a "Nuclear Service Worker Kill-Switch" that unregisters all existing service workers on load. This prevents stale service-worker caching issues.
+
+### `src/App.tsx`
+
+Main app component:
+
+- Imports `Navbar`, `PrivateRoute`, `useStore`, `GooeyBackground`.
+- Lazy-loads pages with `React.lazy`: Home, Login, Dashboard, Signup.
+- Uses `Suspense` with a custom `AppLoader` that shows a premium card and "Booting POSTL" text.
+- Reads `prefs.darkMode` from Zustand and applies either `dark` or `light` class to the root wrapper.
+- Always renders `GooeyBackground` and `Navbar`.
+- Routes:
+  - `/`: Home page.
+  - `/login`: Login page.
+  - `/signup`: Signup page.
+  - `/dashboard`: private Dashboard.
+  - `/generate`: private Dashboard alias.
+
+## 5. Firebase client setup
+
+### `src/firebase.ts`
+
+Initializes Firebase client SDK with hardcoded project config for project `postl-0`:
+
+- `apiKey`
+- `authDomain`
+- `projectId`
+- `storageBucket`
+- `messagingSenderId`
+- `appId`
+- `measurementId`
+
+Exports:
+
+- `auth = getAuth(app)`
+- `db = getFirestore(app)`
+
+It also initializes analytics with `getAnalytics(app)`, but does not export it. The `.env.example` suggests these values were intended to be environment variables, but the actual code hardcodes them.
+
+## 6. Authentication flow
+
+### `src/context/AuthContext.tsx`
+
+Defines `AuthContextType`:
+
+- `user: User | null`
+- `login(email, password)`
+- `logout()`
+- `getToken()`
+- `loading: boolean`
+
+`AuthProvider`:
+
+- Keeps `user` and `loading` state.
+- Subscribes to Firebase `onAuthStateChanged` on mount.
+- Sets `user` to the Firebase user and `loading` false after auth state resolves.
+- `login` calls `signInWithEmailAndPassword(auth, email, password)`.
+- `logout` calls `signOut(auth)`.
+- `getToken` returns `getIdToken(auth.currentUser)` or null.
+
+### `src/components/PrivateRoute.tsx`
+
+Protects private routes:
+
+- Reads `AuthContext`.
+- While auth is loading, shows a centered emerald spinner.
+- If no user, redirects to `/login` with `replace`.
+- If authenticated, renders children.
+
+### `src/pages/Login.tsx`
+
+Login page:
+
+- State: email, password, loading, error, showPassword.
+- Validates email with simple regex.
+- On submit:
+  - Prevents default form behavior.
+  - Validates email.
+  - Calls `auth.login(email, password)`.
+  - Navigates to `/dashboard` on success.
+  - Maps Firebase error codes to user-friendly messages.
+- UI includes glass panel, animated blobs, back-home link, password visibility toggle, and premium POSTL branding.
+
+### `src/pages/Signup.tsx`
+
+Signup page:
+
+- State: email, password, loading, error, showPassword.
+- Uses Firebase `createUserWithEmailAndPassword` directly instead of going through AuthContext.
+- Validates email and minimum password length.
+- Computes password strength checks:
+  - at least 8 characters,
+  - contains a number,
+  - contains uppercase.
+- On success, navigates to `/dashboard`.
+- Maps Firebase `auth/email-already-in-use` and `auth/weak-password` errors.
+
+## 7. Global state
+
+### `src/store/useStore.ts`
+
+Zustand store persisted under localStorage key `postl-v4-store`.
+
+Types:
+
+`UserPreferences`:
+
+- `selectedModel: string`
+- `creativity: number`
+- `tone`: one of `professional`, `casual`, `witty`, `enthusiastic`, `bold`, `minimal`, `storytelling`, `data-driven`
+- `fontSize: number`
+- `darkMode: boolean`
+
+Default preferences:
+
+- `selectedModel: 'google/gemma-3-27b-it:free'`
+- `creativity: 0.7`
+- `tone: 'professional'`
+- `fontSize: 28`
+- `darkMode: true`
+
+`UsageStats`:
+
+- `totalGenerations`
+- `platformCounts`
+- `toneCounts`
+- `lastGeneratedAt`
+
+Store actions:
+
+- `setPrefs(partialPrefs)`: shallow merges into `prefs`.
+- `resetPrefs()`: resets to defaults.
+- `addRecentPrompt(prompt)`: deduplicates, prepends prompt, keeps latest 8.
+- `clearRecentPrompts()`.
+- `incrementUsage(platform, tone)`: increments totals, per-platform count, per-tone count, and updates timestamp.
+
+Important mismatch:
+
+- Some tests and older code references use `prefs.aiModel`, but current store uses `prefs.selectedModel`.
+
+## 8. Navigation and global UI
+
+### `src/components/Navbar.tsx`
+
+Navbar behavior:
+
+- Uses AuthContext to know if user is logged in.
+- Uses Zustand `prefs.darkMode` and `setPrefs` to toggle theme.
+- Uses `useLocation` to determine current route.
+- Tracks `scrolled` when `window.scrollY > 50`.
+- Closes mobile menu on route change.
+- Shows POSTL logo with rocket and `v4` badge.
+- Desktop nav:
+  - dark/light toggle.
+  - if authenticated: Dashboard link, avatar initial, logout button.
+  - if not authenticated: Login and Join links.
+- Mobile nav uses hamburger/close icons and AnimatePresence.
+- `handleLogout` calls auth logout then navigates to `/login`.
+
+### `src/components/GooeyBackground.tsx` and `GooeyBackground.css`
+
+The component renders an always-fixed animated background:
+
+- Uses an SVG goo filter with Gaussian blur and color matrix.
+- Renders five animated blob divs plus an interactive blob.
+- Interactive blob follows the mouse with smoothing by tracking target mouse coords and current coords in `requestAnimationFrame`.
+- Adds a noise overlay via inline SVG data URL.
+- Uses CSS variables for theme colors.
+
+### `src/components/ErrorBoundary.tsx`
+
+Class-based React error boundary:
+
+- Tracks `hasError` and `error`.
+- `getDerivedStateFromError` sets error state.
+- `componentDidCatch` logs error and info.
+- On error, displays a full-screen "Neural Studio Error" panel showing the error text.
+- Provides buttons:
+  - refresh page,
+  - hard reset, which clears localStorage and reloads.
+
+Note: This component exists but is not currently wrapped around `App` in `main.tsx`.
+
+## 9. Home/landing page
+
+### `src/pages/home.tsx`
+
+Landing page with heavy marketing and animation:
+
+- Defines reusable `Reveal` component using Framer Motion `useInView` for scroll reveal animations.
+- Defines `Counter` component using requestAnimationFrame and easing to animate numeric counters.
+- Platform data includes Twitter/X, Instagram, LinkedIn, TikTok, Email, Blog, Ad Copy.
+- Feature data:
+  - Strategy Engine,
+  - Brand Voice DNA,
+  - Content Lab.
+- Steps describe selecting platform, choosing voice, and generating content.
+- Uses icons from React Icons and SiTiktok.
+- Uses `useNavigate` to move users to app flows.
+- Visual style emphasizes gradients, glass panels, oversized typography, animated cards, and scroll-based effects.
+
+## 10. Dashboard
+
+### `src/pages/Dashboard.tsx`
+
+Dashboard is the main authenticated workspace. It has tabs:
+
+- `generate`: Studio tab, renders `GeneratePost`.
+- `history`: History tab, renders `PostHistory`.
+- `analytics`: Analytics tab, renders `AnalyticsPanel`.
+
+`AnalyticsPanel`:
+
+- Reads `usageStats` from Zustand.
+- Computes top platform and top tone by sorting count entries descending.
+- Shows stat cards:
+  - Total Generations,
+  - Top Platform,
+  - Favorite Tone,
+  - Last Created.
+- Shows platform distribution bars based on total generation counts.
+- Platform labels match the rest of the app.
+
+Dashboard also imports AuthContext, `FaSignature`, `FaHistory`, `FaChartBar`, `FaRocket`, and Framer Motion/AnimatePresence for animated tab UI.
+
+## 11. Studio/generation component
+
+### `src/components/GeneratePost.tsx`
+
+This is the core frontend generation studio. It coordinates selector state, API calls, Firestore writes, result display, recent prompts, usage stats, copy behavior, and feedback.
+
+Important constants:
+
+`platformSuggestions`: prompt suggestion arrays by platform:
+
+- Twitter: AI replacing creative jobs, building a product nobody wanted, remote work, hustle culture.
+- Instagram: creative process, creator apps, morning routine, perfection.
+- LinkedIn: turning down offer, leadership, networking, career failure.
+- TikTok: life hack, things known at 20, solo founder, interview red flags.
+- Email: product launch, re-engagement, newsletter, limited-time offer.
+- Blog: content marketing, personal brand, AI creative industries, startup mistakes.
+- Ad: SaaS trial, fitness coaching, course launch, flash sale.
+
+`platformIntelligence`: frontend-side informational platform cards:
+
+- Twitter: 280 chars, replies/shares, hook-insight-CTA, quote card/portrait.
+- Instagram: 2,200 chars, save-worthy value, relatable story hashtags, lifestyle/carousel visual.
+- LinkedIn: 3,000 chars, authority/trust, personal tension/lesson/takeaway, editorial business visual.
+- TikTok: 60 sec script, first 3 seconds, POV/pattern interrupt/payoff, vertical video scene.
+- Email: inbox-ready, opens/clicks, subject/problem/benefit/CTA, product/newsletter hero.
+- Blog: SEO structure, rank/educate, thesis/outline/examples/next steps, editorial feature image.
+- Ad: conversion copy, attention/action, pain/promise/proof/urgency, ad creative.
+
+`getPromptReadiness(prompt)`:
+
+- Counts words.
+- Computes score capped at 100 using word count, punctuation, and length over 80 chars.
+- Labels: `Launch-ready`, `Strong brief`, `Needs detail`, or `Idea seed`.
+
+`fallbackPrefs`:
+
+- Exists as local fallback in component and matches old/current defaults in spirit.
+
+The component imports studio sub-components:
+
+- `ModelSelector`
+- `PlatformSelector`
+- `FormatSelector`
+- `ToneSelector`
+- `TopicSelector`
+- `PromptInputArea`
+- `PostResultView`
+
+It also imports:
+
+- Axios.
+- Firebase Firestore `collection`, `addDoc`, `serverTimestamp`.
+- AuthContext.
+- Zustand store.
+- Framer Motion.
+- Icons.
+
+Expected generation flow from this component:
+
+1. User selects model, platform, content type, tone, topic, creativity, font size, and prompt.
+2. User clicks Generate.
+3. Component gets Firebase ID token through AuthContext `getToken`.
+4. Component sends generation request to backend using Axios, including Authorization Bearer token.
+5. Backend returns `results`, `strategy`, `meta`, and cache flag.
+6. Component stores primary result and variants.
+7. Component updates usage stats and recent prompts in Zustand.
+8. Component writes a generated post record to Firestore `posts` collection for the user.
+9. UI renders `PostResultView` with text, metadata, strategy, copy/regenerate/feedback handlers, image prompt, and timing.
+
+The exact file is large and UI-heavy, but its role is orchestration of all generation-related frontend behavior.
+
+## 12. Studio sub-components
+
+### `src/components/studio/ModelSelector.tsx`
+
+Currently exposes one model option:
+
+- `id: 'gemma4:e2b'`
+- `name: 'Gemma 4 (e2b) - Local'`
+- `type: 'Local'`
+
+Props:
+
+- `selectedModel`
+- `setSelectedModel(model)`
+
+It renders buttons and highlights the selected model with emerald styling and a glowing dot.
+
+Important mismatch:
+
+- Backend default model name is `gemma-4:e2b` with a hyphen after gemma, while this selector uses `gemma4:e2b` without that hyphen.
+
+### `src/components/studio/PlatformSelector.tsx`
+
+Defines platform union:
+
+- `twitter`
+- `instagram`
+- `linkedin`
+- `tiktok`
+- `email`
+- `blog`
+- `ad`
+
+Each option has an icon, name, hint, and brand color. It renders a responsive grid of animated platform buttons with active glow/pulse styling.
+
+### `src/components/studio/FormatSelector.tsx`
+
+Defines content types:
+
+- `single`: Single Post.
+- `thread`: Thread.
+- `caption`: Caption + Tags.
+- `script`: Video Script.
+- `blog`: Blog Outline.
+- `email`: Email Subject.
+- `ad`: Ad Copy.
+- `pitch`: Elevator Pitch.
+
+Renders pill-style buttons with icons.
+
+### `src/components/studio/ToneSelector.tsx`
+
+Defines tones:
+
+- Professional, emoji 🎯, authority/credibility.
+- Casual, emoji ☕, relaxed/conversational.
+- Witty, emoji ⚡, sharp/clever.
+- Enthusiastic, emoji 🔥, high energy.
+- Bold, emoji 💪, provocative/strong.
+- Minimal, emoji ✨, less is more.
+- Storytelling, emoji 📖, narrative-driven.
+- Data-Driven, emoji 📊, stats/evidence.
+
+Renders animated pill buttons with active underline.
+
+### `src/components/studio/TopicSelector.tsx`
+
+Defines topics:
+
+- `general`
+- `motivational`
+- `tech`
+- `startup`
+- `travel`
+- `funny`
+- `educational`
+
+Renders topic buttons with icons.
+
+### `src/components/studio/PromptInputArea.tsx`
+
+Prompt input and sliders:
+
+Props:
+
+- `prompt`, `setPrompt`
+- `creativity`, `setCreativity`
+- `fontSize`, `setFontSize`
+
+Behavior:
+
+- Auto-expands textarea height to at least 100px based on scrollHeight.
+- Rotates placeholder text every 3.5 seconds when prompt is empty.
+- Tracks character count up to maxLength 500.
+- Shows warning colors when char count passes 300/400.
+- Provides AI assist chips:
+  - `+ Hook`: appends `Start with a powerful hook: `
+  - `+ CTA`: appends call-to-action line.
+  - `+ Data`: prepends/continues with statistic instruction.
+  - `+ Story`: asks for personal story.
+- Derives creativity label:
+  - <= 0.3 Conservative,
+  - <= 0.6 Balanced,
+  - <= 0.8 Creative,
+  - otherwise Wild.
+- Also includes font size controls lower in the component.
+
+### `src/components/studio/PostResultView.tsx`
+
+Responsible for displaying generated content and its strategy/performance UI.
+
+Props include:
+
+- `result`
+- `allVariants`
+- `imagePrompt`
+- `category`
+- `platform`
+- `seed`
+- `fontSize`
+- `copied`
+- `handleCopy`
+- `feedbackStatus`
+- `handleFeedback`
+- `strategyBrief`
+- `onRegenerate`
+- `loading`
+- `elapsedMs`
+- `meta`
+
+Internal helpers:
+
+`platformLabels`: maps platform IDs to display labels.
+
+`analyzeContent(text)`:
+
+- Counts words.
+- Counts sentences by splitting on punctuation.
+- Counts hashtags with regex.
+- Counts questions.
+- Estimates read minutes at 220 words/minute.
+- Computes momentum score as baseline 45 plus hashtag/question/word factors capped at 100.
+
+`downloadMarkdown(text, platform, category)`:
+
+- Creates a markdown export with platform, format, exported timestamp, and content.
+- Creates a Blob and object URL.
+- Clicks a temporary anchor to download `postl-{platform}-{Date.now()}.md`.
+
+`useTypewriter(text, speed)`:
+
+- Animates a newly received text result one character at a time.
+- Resets only when text changes.
+- Returns `displayed` and `isTyping`.
+
+`EngagementScore`:
+
+- Draws a circular SVG progress ring.
+- Color by score: green >= 75, amber >= 50, red otherwise.
+- Label: Excellent/Good/Needs Work.
+
+UI features include:
+
+- Variant navigation if multiple variants exist.
+- Copy button and copied state.
+- Regenerate button.
+- Feedback buttons.
+- Download markdown button.
+- Strategy widgets such as hashtags, best time, tip, framework, character limits, engagement score.
+- Animated/typewriter result display.
+
+## 13. History
+
+### `src/components/PostHistory.tsx`
+
+Fetches and manages generated post history from Firestore.
+
+`Post` interface:
+
+- `id`
+- `content`
+- `category`
+- `platform?`
+- `timestamp`
+- `imagePrompt?`
+- `tone?`
+- `engagementScore?`
+
+Behavior:
+
+- Reads AuthContext.
+- If no authenticated user, does nothing.
+- Creates Firestore query:
+  - collection `posts`
+  - where `userId == auth.user.uid`
+  - orderBy `timestamp desc`
+  - limit 50
+- Uses `onSnapshot` for realtime history updates.
+- Stores posts in state and loading state.
+- Allows search by content text.
+- Allows filtering by platform or `all`.
+- Allows expanding one post at a time.
+- Allows copying post content to clipboard with temporary copied indicator.
+- Allows deleting post document by `deleteDoc(doc(db, 'posts', postId))`.
+- Shows skeleton shimmer loading blocks while loading.
+
+## 14. Backend server
+
+### `backend/server.js`
+
+The Express backend is the central API and AI orchestration layer.
+
+#### Module/import setup
+
+Imports:
+
+- `express`
+- `cors`
+- `dotenv`
+- `express-rate-limit`
+- `helmet`
+- `Joi`
+- `firebase-admin`
+- `fs`
+- `path`
+- `crypto`
+- `fileURLToPath`
+
+Important issue:
+
+- The file calls `dotenv.config({ path: path.join(__dirname, '.env') });` before `__dirname` is defined. In ESM, `__dirname` is defined later via `fileURLToPath(import.meta.url)`. This can throw a `ReferenceError` at startup. The intended order is to define `__filename`/`__dirname` before using them.
+
+It sanitizes `OPENROUTER_API_KEY` by stripping quotes, whitespace, CR/LF.
+
+#### Firebase Admin setup
+
+- Looks for `backend/service-account.json`.
+- If present:
+  - reads file as UTF-8,
+  - strips anything before first `{`,
+  - logs first 20 chars of sanitized JSON,
+  - parses JSON.
+- Else:
+  - parses `process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}'`.
+- Converts escaped `\n` in private key to real newlines.
+- If service account has `project_id`, initializes Firebase Admin with certificate credential.
+- Else logs warning that service-account or env key is invalid.
+
+#### Express app setup
+
+- `app = express()`.
+- `app.set('trust proxy', 1)`.
+- `PORT = process.env.PORT || 4000`.
+
+Middleware:
+
+- rate limit: 15 minute window, max 100, returns JSON error.
+- CORS origin is either comma-separated `ALLOWED_ORIGINS` or `true` for all origins, credentials enabled.
+- Helmet security headers.
+- JSON body parser.
+
+#### Authentication middleware
+
+`authenticate(req, res, next)`:
+
+- Requires Authorization header starting with `Bearer `.
+- Extracts token.
+- Calls `admin.auth().verifyIdToken(token)`.
+- Stores decoded token on `req.user`.
+- On missing/invalid token returns 401 JSON error.
+
+If Firebase Admin was not initialized correctly, this middleware will fail when `admin.auth()` is used.
+
+#### Cache
+
+Constants:
+
+- `CACHE_TTL_MS = 60 * 60 * 1000` one hour.
+- `MAX_CACHE_SIZE = 200`.
+- `responseCache = new Map()`.
+
+`makeCacheKey(params)`:
+
+- JSON stringifies params.
+- SHA-256 hashes them.
+- Uses first 16 hex chars.
+
+`cacheGet(key)`:
+
+- Returns null if absent.
+- Deletes and returns null if expired.
+- Returns stored data otherwise.
+
+`cacheSet(key, data)`:
+
+- If map size reaches max, deletes oldest inserted key.
+- Stores data with expiration timestamp.
+
+#### AI result cleaning
+
+`cleanAIResult(text)`:
+
+- Returns empty string for falsy input.
+- Removes common AI preambles such as "Here's...", "Sure", "Absolutely", "Of course", "I'd be happy to", "Let me", "Great".
+- Handles markers by splitting on the marker and taking the last piece:
+  - `<|RESULT|>:`
+  - `Creative Post:`
+  - `Instruction:`
+  - `Output:`
+  - `JSON:`
+  - `Content:`
+  - `Response:`
+- Removes leading/trailing quotes.
+- Removes legacy prompt phrases.
+- Removes `**Note:**` blocks.
+- Removes standalone `---` lines.
+- Removes `IMAGE_TAG:` and everything after it.
+- Collapses 4+ newlines to 3.
+- Trims.
+
+#### Engagement score prediction
+
+`predictEngagementScore(text, platform, tone)`:
+
+- Starts with baseline 50.
+- Platform-specific length ranges and sweet spots:
+  - Twitter 80-260, sweet 180.
+  - Instagram 100-1500, sweet 500.
+  - LinkedIn 200-2000, sweet 800.
+  - TikTok 50-250, sweet 150.
+  - Email 20-55, sweet 40.
+  - Blog 500-4000, sweet 2000.
+  - Ad 30-120, sweet 80.
+- Adds points for being within optimal length and near sweet spot.
+- Adds engagement signals:
+  - question mark,
+  - line breaks,
+  - selected emojis,
+  - data points like percentages or multipliers,
+  - strong short first-line hook,
+  - hashtags on Twitter/Instagram/TikTok,
+  - witty/bold/storytelling tone,
+  - thread indicators.
+- Penalties:
+  - too long,
+  - missing ending punctuation,
+  - repeated characters.
+- Clamps score between 15 and 98.
+
+Important bug:
+
+- `generateStrategyBrief` calls `predictEngagementScore(text, platform, contentType)`, passing content type as the third argument instead of tone. This means tone-based boosts usually do not work.
+
+#### Hashtag generation
+
+`generateHashtags(text, platform, category)`:
+
+- Returns null unless platform is Twitter, Instagram, or TikTok.
+- Extracts lowercase alphanumeric words longer than 3 chars from generated text.
+- Takes first 8 keywords.
+- Adds base platform tags:
+  - Twitter: trending, viral, mustread.
+  - Instagram: instagood, explore, fyp, reels.
+  - TikTok: fyp, viral, trending, foryou.
+- Adds category tags:
+  - single: content, creator.
+  - thread: thread, breakdown.
+  - caption: caption, mood.
+  - script: script, video, content.
+  - ad: marketing, growth.
+  - pitch: startup, business.
+- Deduplicates and limits to 20 for Instagram, 8 for others.
+- Returns tags joined as a string like `#tag #tag2`.
+
+#### Request validation
+
+`generateSchema` validates POST body:
+
+- `prompt`: string 2-500 required.
+- `topic`: one of general/motivational/tech/travel/funny/educational/startup, default general.
+- `platform`: one of twitter/instagram/linkedin/tiktok/email/blog/ad, default twitter.
+- `contentType`: one of single/thread/caption/script/blog/email/ad/pitch, default single.
+- `tone`: one of professional/casual/witty/enthusiastic/bold/minimal/storytelling/data-driven, default professional.
+- `creativity`: number 0-1, default 0.7.
+- `variants`: number 1-3, default 1.
+- `model`: string, default `google/gemma-3-27b-it:free`.
+
+#### Platform intelligence
+
+`PLATFORM_RULES` defines generation rules per platform:
+
+Twitter:
+
+- Max 280.
+- Hook-first, line breaks, no hashtag spam, one insight.
+- Viral example about startups and Year 1.
+- Best time Tue/Wed 9-11 AM EST.
+- Avoid "Just a reminder", "Hot take", too many hashtags, weak questions.
+
+Instagram:
+
+- Max 2200.
+- First line as hook, micro-story, short paragraphs, CTA, emojis as bullets, hashtags at end.
+- Viral example about almost quitting dream career.
+- Best time Mon/Thu 11 AM - 1 PM EST.
+- Avoid "Happy Monday", "Just posted", starting with link in bio.
+
+LinkedIn:
+
+- Max 3000.
+- Contrarian/vulnerable opener, short paragraphs, list arrows, professional human story.
+- Viral example about getting fired and lessons.
+- Best time Tue-Thu 8-10 AM EST.
+- Avoid "I'm humbled to announce", corporate jargon, "Exciting news".
+
+TikTok:
+
+- Max 300.
+- First 3 seconds are everything, pattern interrupts, raw/conversational.
+- Viral example about productivity hack.
+- Best time Tue/Thu 2-5 PM EST.
+- Avoid formal/corporate language and long paragraphs.
+
+Email:
+
+- Max 60.
+- Subject line only, curiosity/urgency without clickbait, numbers/brackets/personalization/contrast.
+- Viral example: `$0 strategy` vs `$50K campaign`.
+- Best time Tue/Wed 10 AM EST.
+- Avoid all-caps full subject, newsletter number format, starting with Hey/Hi.
+
+Blog:
+
+- Max 5000.
+- SEO structure, compelling hook, markdown headings, bullets, concrete examples, actionable conclusion.
+- Best time Mon 9 AM EST.
+- Avoid generic intros.
+
+Ad:
+
+- Max 150.
+- Direct response copywriting, benefit-first, desire/urgency, single CTA, power words.
+- Viral example for POSTL ad copy.
+- Best time Daily 6-9 PM EST.
+- Avoid vague benefits, weak CTA, multiple CTAs.
+
+#### Tone personality engine
+
+`TONE_INSTRUCTIONS` maps tones to writing behavior:
+
+- Professional: authority, credibility, data, expertise.
+- Casual: texting smart friend, contractions, colloquial flow.
+- Witty: clever, ironic, cultural references.
+- Enthusiastic: high energy, strategic excitement.
+- Bold: provocative, contrarian, polarizing.
+- Minimal: every word earns its place, short sentences, whitespace.
+- Storytelling: scene first, sensory details, tension/resolution.
+- Data-driven: numbers, research, frameworks.
+
+#### Strategy brief generation
+
+`generateStrategyBrief(platform, contentType, text)` returns:
+
+- `bestTime` from platform rules.
+- `hashtags` from `generateHashtags`.
+- `framework`: randomly selected framework for content type.
+- `tip`: randomly selected pro tip for platform.
+- `charCount`.
+- `maxChars`.
+- `engagementScore`.
+
+Frameworks include AIDA, PAS, Hook → Value → CTA, Skyscraper Technique, Curiosity Gap, FOMO + Social Proof, and others.
+
+Pro tips are platform-specific claims about timing, engagement, algorithm behavior, and content formats.
+
+#### Prompt refinement
+
+`refineUserPrompt(prompt, topic)`:
+
+- If prompt length >= 15, returns prompt unchanged.
+- If no OpenRouter API key, returns prompt unchanged.
+- Otherwise calls OpenRouter chat completions with model `google/gemma-3-27b-it:free`.
+- Tells AI to expand a short subject into one vivid, specific, actionable sentence while preserving the exact core subject.
+- Timeout: 20 seconds.
+- On success returns trimmed expanded prompt without surrounding quotes.
+- On failure logs warning and returns original prompt.
+
+#### OpenRouter connectivity probe
+
+`testOpenRouterConnection()`:
+
+- If no API key, returns.
+- GETs `https://openrouter.ai/api/v1/auth/key`.
+- Logs passed/failed details and usage.
+
+Important note:
+
+- This function is defined but not called in the current file.
+
+#### Retry helper
+
+`callWithRetry(fn, maxRetries = 2, baseDelay = 1000)`:
+
+- Calls async function.
+- On failure retries up to 2 times.
+- Delay uses exponential backoff: 1000ms, 2000ms.
+- Throws last error if all attempts fail.
+
+#### System prompt construction
+
+`buildSystemPrompt(platform, contentType, tone, topic, platformRules)`:
+
+Builds a long instruction string telling the model:
+
+- It is POSTL, an elite content strategist.
+- The user's prompt/subject is absolute center and must not be changed.
+- The selected topic is only an angle/flavor.
+- Includes platform, content format, topic, platform mastery rules, viral reference, tone instruction, anti-patterns.
+- Explicitly forbids generic AI intros/meta-commentary.
+- Gives format-specific output rules:
+  - thread: number posts `1/`, `2/`, separate with `---`.
+  - script: `[VISUAL]` and `[AUDIO/VO]` blocks, 3-second hook, timing cues.
+  - blog: markdown headers and bullets, stat/hook opening.
+  - email: `Subject: ...` only.
+  - ad: `Headline`, `Body`, `CTA`.
+  - caption: caption plus hashtags.
+  - pitch: 3 powerful sentences.
+  - single: standalone optimized post.
+- Max length is platform-specific.
+- Tells model not to append image metadata.
+
+#### Endpoints and routing
+
+Creates `router = express.Router()`.
+
+`GET /health`:
+
+- Returns `{ status: 'ok', version: '4.0', engine: 'POSTL Core' }`.
+
+`POST /generate-post`:
+
+- Protected by `authenticate`.
+- Validates body with Joi.
+- Normalizes numeric `creativity` and `variants`.
+- Starts timer.
+- Refines short prompt.
+- Builds cache key from prompt/topic/platform/contentType/tone/creativity/variants.
+- Returns cached response if available.
+- Determines Ollama config:
+  - `OLLAMA_URL` default `http://localhost:11434`.
+  - `OLLAMA_MODEL` default `gemma-4:e2b`.
+- Builds system prompt.
+- Creates one generation promise per variant.
+- Each variant calls `${OLLAMA_URL}/api/chat` with:
+  - model,
+  - temperature = creativity plus 0.1 per variant capped at 1.2,
+  - stream false,
+  - max_tokens 800,
+  - a user message containing instructions and content request.
+- Each Ollama call has 90 second timeout and retry wrapper.
+- Uses `Promise.allSettled` to accept partial variant success.
+- Cleans fulfilled results.
+- If no results, attempts Hugging Face fallback if `HF_TOKEN` exists:
+  - model `HF_MODEL` or `google/gemma-2b-it`,
+  - posts to inference API,
+  - attempts to read `generated_text` or `output`.
+- If still no result, returns 500.
+- Builds primary result, strategy brief, elapsed time.
+- Response data:
+  - `results`
+  - `strategy`
+  - `meta`: model, engine, variants, elapsedMs, platform, contentType, tone
+  - `cached: false`
+- Caches response and returns JSON.
+- Fatal catch handles 429 specially, otherwise returns `Ollama request failed` with suggestion.
+
+Important likely syntax issue:
+
+- Near the end of the `/generate-post` route, the catch block and braces are mis-indented and appear malformed:
+  - There is `} catch (err) { ... }` followed by extra closing braces before `});`.
+  - This should be verified by running Node/build, but visually the route has a likely syntax/bracing problem.
+
+Mounting:
+
+- `app.use('/api', router)`
+- `app.use('/.netlify/functions/api', router)`
+- `app.use('/', router)`
+
+This means health and generate routes can exist as:
+
+- `/api/health`, `/api/generate-post`
+- `/.netlify/functions/api/health`, `/.netlify/functions/api/generate-post`
+- `/health`, `/generate-post`
+
+Server startup:
+
+- If not inside Netlify/Lambda environment, listens on `PORT` and logs backend URL.
+- Exports `app` as default for serverless handlers.
+- Global process handlers log unhandled rejections and uncaught exceptions.
+
+## 15. Netlify function
+
+### `netlify/functions/api.js`
+
+Very small serverless adapter:
+
+- Imports `serverless-http`.
+- Imports Express app from `../../backend/server.js`.
+- Exports `handler = serverless(app)`.
+
+Combined with `netlify.toml`, `/api/*` is redirected to `/.netlify/functions/api/:splat`.
+
+## 16. Python local AI server
+
+### `backend/LocalAIServer/server.py`
+
+Purpose: local AI generation server independent from the Express Ollama flow.
+
+Setup:
+
+- Flask app.
+- CORS enabled.
+- Logging configured at INFO.
+- Determines `device = 0` if CUDA is available, otherwise `-1` for CPU.
+- Uses `torch.float16` on GPU, `torch.float32` on CPU.
+- Loads Hugging Face pipeline:
+  - task `text-generation`
+  - model `gpt2-large`
+  - selected device and dtype.
+- Warms model with prompt `Warmup`, max 5 new tokens, deterministic sampling.
+- If loading fails, logs fatal init error and sets `generator = None`.
+
+Route `POST /generate-post`:
+
+- If generator is None, returns 503 with "Neural Engine offline".
+- Reads JSON fields:
+  - `prompt`, default empty.
+  - `topic`, default general.
+  - `platform`, default twitter.
+  - `contentType`, default single.
+  - `tone`, default professional.
+  - `creativity`, default 0.7.
+- If prompt empty, returns 400.
+- Maps creativity to temperature: `0.7 + creativity * 0.6`, clamped 0.4 to 1.5.
+- Builds instruction: craft a tone/contentType optimized for platform on topic.
+- Uses few-shot examples by content type:
+  - single,
+  - thread,
+  - caption,
+  - script,
+  - blog,
+  - email,
+  - ad,
+  - pitch.
+- Builds full prompt with instruction, example, input, and `Output:`.
+- Generates with max_new_tokens 350 and sampling.
+- Extracts generated text after `Output:`.
+- Has cleaning logic lower in file to trim artifacts and likely extract image tags.
+
+This server is launched by backend package script `npm start` alongside Node using `concurrently`, but the current Node backend generation code does not call this Flask server. Older architecture docs describe it as fallback, but actual Express code currently falls back to Hugging Face API instead.
+
+## 17. Styling/design system
+
+### `src/index.css`
+
+Contains Tailwind imports and a large custom design system.
+
+Root light-mode tokens:
+
+- background/text/muted colors.
+- aurora background variables.
+- glass background and border.
+- panel/input/ring/scrollbar/selection colors.
+- accent colors emerald/cyan/violet/amber/red/green.
+- fonts: Space Grotesk, Inter, JetBrains Mono.
+- noise opacity and spring transition.
+
+Dark-mode tokens under `.dark`:
+
+- dark background `#030712`.
+- light text `#f1f5f9`.
+- muted slate.
+- stronger aurora colors.
+- transparent glass and input backgrounds.
+- different selection/noise settings.
+
+Base layer:
+
+- smooth scroll.
+- body antialiasing, geometric precision, no horizontal overflow.
+- focus-visible outline.
+
+Other CSS sections include:
+
+- aurora background pseudo-elements.
+- page container spacing.
+- noise overlay.
+- mesh/background animation keyframes.
+- premium glass panel classes.
+- input/card styles.
+- shimmer loading.
+- score ring styles.
+- custom scrollbar.
+- various animation utility classes.
+
+### `src/components/GooeyBackground.css`
+
+Works with `GooeyBackground.tsx` to animate fluid gradient blobs and interactive goo effect. It is part of the premium animated visual layer.
+
+## 18. Build and deployment configuration
+
+### Root `package.json`
+
+Scripts:
+
+- `dev`: Vite dev server.
+- `build`: `tsc && vite build`.
+- `preview`: Vite preview.
+- `test`: Vitest watch/default.
+- `test:unit`: `vitest run`.
+- `test:e2e`: `cypress run`.
+- `test:ci`: unit tests then Cypress.
+- `cypress:open`: Cypress UI.
+- `deploy:vercel`: `vercel --prod`.
+- `deploy:netlify`: deploys `dist` to Netlify.
+- `clean`: removes node_modules and package-lock then reinstalls with force.
+
+Dependencies include Firebase, Axios, Framer Motion, OpenAI package, React, React Router, Zustand, react-datepicker, react-icons.
+
+Dev dependencies include Vite, TypeScript, Tailwind, Cypress, Vitest, Testing Library, jest-axe, jsdom, msw, terser.
+
+### Backend `package.json`
+
+- `type: module`.
+- `start`: runs Node server and Python local AI server concurrently.
+- `start:prod`: runs only Node server.
+- `build`: no-op echo.
+- Dependencies are server/security/Firebase/serverless packages.
+
+### `vite.config.ts`
+
+- React plugin.
+- Dev server:
+  - port 3005,
+  - host 127.0.0.1,
+  - proxies `/api` to `http://localhost:4000`.
+- Build:
+  - output `dist`,
+  - minify with terser,
+  - sourcemaps only in development,
+  - manual chunk splitting:
+    - React/vendor,
+    - Firebase,
+    - UI libs,
+    - app-core libs,
+    - other libs.
+- Defines `__APP_VERSION__` from npm package version.
+- Vitest config:
+  - jsdom environment,
+  - setup file `src/setupTests.ts`,
+  - globals enabled.
+
+### `tailwind.config.js`
+
+- Content scans `./src/**/*.{js,jsx,ts,tsx}`.
+- Dark mode uses class strategy.
+- No custom theme extension or plugins.
+
+### `cypress.config.js`
+
+- E2E baseUrl is `http://localhost:3000`.
+- Spec pattern `cypress/e2e/**/*.cy.{js,jsx,ts,tsx}`.
+- Support file `cypress/support/e2e.ts`.
+
+Important mismatch:
+
+- Vite dev server is configured for port 3005, but Cypress expects 3000.
+
+### `netlify.toml`
+
+- Build command installs backend dependencies then builds frontend.
+- Publish directory `dist`.
+- Functions directory `netlify/functions`.
+- Uses esbuild bundler for functions.
+- Redirects `/api/*` to Netlify function.
+- Redirects all other paths to `/index.html` for SPA routing.
+
+### `vercel.json`
+
+- Build command `npm run build`.
+- Output `dist`.
+- Framework Vite.
+- Rewrites every route to `/index.html`.
+
+Important limitation:
+
+- Vercel config only serves frontend SPA. It does not configure the Express backend API as a Vercel serverless function.
+
+### `.env.example`
+
+Documents frontend production variables:
+
+- Firebase config values.
+- `VITE_API_BASE_URL`.
+
+Actual `firebase.ts` does not currently read these variables.
+
+### `backend/.env.example`
+
+Documents backend variables:
+
+- `PORT=4000`
+- `ALLOWED_ORIGINS`
+- `OPENROUTER_API_KEY`
+- `AI_SERVER_URL`
+- `FIREBASE_SERVICE_ACCOUNT_KEY`
+
+Actual backend also uses `OLLAMA_URL`, `OLLAMA_MODEL`, `HF_TOKEN`, `HF_MODEL`, but these are not documented in the example file.
+
+## 19. Testing setup
+
+### `src/setupTests.ts`
+
+- Imports jest-dom matchers.
+- Imports Vitest `expect` and `vi`.
+- Imports `toHaveNoViolations` from jest-axe.
+- Extends expect with `toHaveNoViolations`.
+
+### `src/mocks/server.ts`
+
+MSW mock server:
+
+- Mocks POST `http://localhost:4000/generate-post` returning:
+  - `results: ['Test generated content']`
+  - `image_prompt: 'Test image prompt'`
+- Mocks share endpoints:
+  - `/share-twitter`
+  - `/share-linkedin`
+  - `/share-facebook`
+
+Important mismatch:
+
+- Current frontend likely calls `/api/generate-post` or backend-mounted routes with Firebase auth, while mock targets `http://localhost:4000/generate-post`.
+- Share endpoints are mocked but no corresponding current backend routes were found.
+
+### `src/components/GeneratePost.test.tsx`
+
+Tests intended behavior:
+
+- Renders without crashing.
+- Accessibility with axe.
+- Updates prompt.
+- Selects category.
+- Toggles AI model.
+- Enables scheduling.
+- Disables generate button when prompt empty.
+- Generates post.
+
+Important mismatches/staleness:
+
+- Looks for text/placeholders/buttons from an older UI, such as `e.g. A motivational post`, `Local (GPT-2)`, `Schedule Post`, and category pressed attributes.
+- Mock store uses `prefs.aiModel`, but current store uses `selectedModel`.
+- The current UI and API have changed, so this test file likely fails without updates.
+
+### `src/components/Navbar.test.tsx`
+
+Tests intended behavior:
+
+- Navbar renders POSTL.
+- Accessibility with axe.
+- Shows Login/Join when no user.
+- Shows Dashboard/Logout when logged in.
+- Toggles dark mode.
+- Logs out and navigates to `/login`.
+- Logo link points to `/`.
+
+Important issues:
+
+- Mixes `vi` and `jest.fn()`.
+- Mocking `react-router-dom` with `vi.importActual` not awaited may be incorrect in Vitest depending on configuration.
+- Auth mock omits `getToken` and `loading`, which are required by context type, though runtime may not use them in Navbar.
+
+### `src/context/AuthContext.test.tsx`
+
+Tests intended behavior:
+
+- AuthProvider renders and exits loading.
+- Initial loading state.
+- Updates user when auth changes.
+- Calls login.
+- Calls logout.
+- Unsubscribes on unmount.
+
+Important issue:
+
+- The file duplicates this line twice:
+  - `const { onAuthStateChanged, signInWithEmailAndPassword, signOut } = require('firebase/auth');`
+- Duplicate `const` declarations in the same scope cause a syntax error.
+- The mock for `firebase/auth` does not include `getIdToken`, while AuthContext imports it.
+
+### `src/store/useStore.test.tsx`
+
+Tests intended behavior:
+
+- Store provides default preferences.
+- Preferences can be updated.
+- Preferences reset.
+- Preferences persist to localStorage.
+
+Important mismatch:
+
+- Test component reads `prefs.aiModel`, which does not exist in current store.
+- It expects default `aiModel` to be `local`, but current default is `selectedModel: 'google/gemma-3-27b-it:free'`.
+- It calls `setPrefs({ aiModel: 'cloud' })`, which is not part of `UserPreferences`.
+
+### Cypress tests
+
+`cypress/e2e/login.cy.ts`:
+
+- Visits `/login`.
+- Expects `input[name=email]`, `input[name=password]`, submit button text Login.
+- Tries real login with `test@example.com/password123` and expects `/dashboard`.
+- Tries invalid credentials and expects `Invalid credentials`.
+
+`cypress/e2e/post-generation.cy.ts`:
+
+- Uses custom `cy.login` command.
+- Visits `/dashboard`.
+- Types prompt.
+- Clicks button containing `GENERATE MAGIC`.
+- Expects generation UI text.
+- Tests scheduling flow with checkbox/datetime-local.
+- Tests copy generated post.
+
+`cypress/support/commands.ts`:
+
+- Adds `cy.login(email, password)` that visits `/login`, fills inputs, clicks submit.
+
+Important mismatches:
+
+- Cypress base URL is 3000 but Vite is 3005.
+- Tests appear to depend on real Firebase credentials/users unless network/auth is mocked elsewhere.
+- Scheduling UI may be old or absent in the current `GeneratePost` component.
+
+## 20. Existing architecture analysis document
+
+### `postl_architecture_analysis.md`
+
+This file describes the intended architecture and vision:
+
+- POSTL is a "Content Intelligence Operating System" or "Creator Hub".
+- Frontend: React, Vite, TypeScript, Tailwind, Framer Motion, Zustand, React Router, Firebase Auth/Firestore.
+- Backend: Node/Express, Helmet, CORS, rate limit, Joi, Firebase Admin.
+- AI: described as OpenRouter Mistral with a two-step short prompt expansion then strict platform-specific generation.
+- Local Neural Engine: Flask/PyTorch/Transformers GPT-2 large.
+- User flow: auth, dashboard/studio/history, generation workflow, result display, feedback, Firestore logging.
+- Design: dark/glassmorphism, emerald/teal gradients, premium aesthetics.
+- Notes likely issues around configuration, security, deployment, and roadmap.
+
+The architecture doc is useful but partly stale because current backend generation has moved to Ollama primary with Hugging Face fallback.
+
+## 21. Data model and Firestore usage
+
+Firestore is used on the client side only in reviewed files:
+
+`posts` collection:
+
+- Written by `GeneratePost` after successful generation.
+- Read by `PostHistory` with `userId` filtering and timestamp ordering.
+- Deleted by `PostHistory`.
+
+Expected post fields from history and generation usage include:
+
+- `userId`
+- `content`
+- `category` or content type
+- `platform`
+- `timestamp`
+- `imagePrompt`
+- `tone`
+- `engagementScore`
+- possible metadata/strategy fields depending on `GeneratePost` implementation.
+
+Authentication security is split:
+
+- Client Firebase Auth determines frontend route access.
+- Backend verifies Firebase ID token for `/generate-post`.
+- Firestore rules are not present in the repository, so actual database read/write security cannot be determined from this codebase.
+
+## 22. End-to-end generation flow
+
+Actual intended complete flow:
+
+1. User opens app at `/`.
+2. User signs up or logs in through Firebase.
+3. AuthProvider records current user.
+4. PrivateRoute allows access to `/dashboard` or `/generate`.
+5. Dashboard defaults to Studio tab.
+6. User selects:
+   - model,
+   - platform,
+   - content type,
+   - topic,
+   - tone,
+   - creativity,
+   - font size,
+   - prompt.
+7. PromptInputArea helps user craft prompt with chips and readiness/character UI.
+8. GeneratePost gets Firebase ID token.
+9. GeneratePost sends authenticated request to backend.
+10. Backend validates body with Joi.
+11. Backend verifies token with Firebase Admin.
+12. Backend optionally expands very short prompts using OpenRouter.
+13. Backend checks in-memory cache.
+14. Backend builds platform/tone/content-type-specific system prompt.
+15. Backend calls Ollama `/api/chat` for one or more variants.
+16. Backend retries transient failures.
+17. Backend cleans AI output.
+18. If Ollama produces nothing, backend attempts Hugging Face fallback.
+19. Backend computes strategy brief: hashtags, framework, tip, best time, char count, max chars, engagement score.
+20. Backend caches and returns JSON.
+21. Frontend displays result in PostResultView.
+22. User can copy, download markdown, regenerate, browse variants, submit feedback.
+23. Frontend logs generation to Firestore.
+24. Zustand usage stats update analytics.
+25. History tab listens to Firestore and shows the saved result.
+
+## 23. Important inconsistencies and technical concerns
+
+These are not changes I made, just observations from reading the project.
+
+1. `backend/server.js` likely fails immediately because `__dirname` is used before it is defined.
+2. `backend/server.js` appears to have malformed braces around the `/generate-post` catch block.
+3. Tests are stale relative to current UI/store/API names.
+4. Store tests reference `aiModel`, but store uses `selectedModel`.
+5. ModelSelector uses `gemma4:e2b`, backend default uses `gemma-4:e2b`.
+6. `.env.example` suggests Firebase values should come from Vite env, but `firebase.ts` hardcodes them.
+7. Backend env example omits current Ollama/Hugging Face env vars.
+8. Cypress expects app on port 3000, Vite uses 3005.
+9. Netlify deployment includes backend function, Vercel deployment only rewrites SPA and does not expose Express backend.
+10. Firebase credential JSON files exist in backend folder and should be protected from public repos.
+11. ErrorBoundary exists but is not mounted in `main.tsx`.
+12. `testOpenRouterConnection` is defined but not called.
+13. `OPENROUTER_API_KEY` is used for prompt refinement, but primary generation is Ollama.
+14. Existing architecture doc says OpenRouter/Mistral is primary, but current code says Ollama is primary.
+15. Python Flask GPT-2 server exists and backend start script launches it, but Express backend does not currently call it.
+16. `generateStrategyBrief` passes contentType into `predictEngagementScore` where tone is expected.
+17. The backend response `meta.engine` logic will always label `ollama` if results exist, even if Hugging Face fallback adds results in some cases, because it compares first result to primary result after primary is assigned from results[0].
+18. MSW mock server targets older URLs and share endpoints not present in backend.
+19. Some Vitest mocks mix Jest and Vitest APIs.
+20. Firestore security rules are not included, so database-level access protections are unknown.
+
+## 24. What the project is trying to become
+
+POSTL is not just a simple caption generator. The code and documentation show an ambition to become a polished AI-powered content production dashboard with:
+
+- platform-specific content generation,
+- tone/brand-voice control,
+- multiple output formats,
+- variants,
+- local and cloud AI options,
+- performance/strategy metadata,
+- history tracking,
+- creator analytics,
+- high-end animated design,
+- deployability through static hosting and serverless backend.
+
+At the moment, it is a partially evolved codebase where the product vision is clear, the frontend is highly designed, and the backend contains substantial generation logic, but several integration points and tests appear to lag behind recent architecture changes.
+
+## 25. File-by-file concise map
+
+- `index.html`: HTML shell, SEO metadata, fonts, root div.
+- `src/main.tsx`: React root rendering, router/auth providers, service worker unregistering.
+- `src/App.tsx`: theme wrapper, global background/navbar, lazy routes.
+- `src/firebase.ts`: Firebase client initialization and auth/firestore exports.
+- `src/context/AuthContext.tsx`: Firebase auth state, login/logout/token provider.
+- `src/components/PrivateRoute.tsx`: auth gate for protected pages.
+- `src/pages/home.tsx`: premium animated landing page.
+- `src/pages/Login.tsx`: Firebase email/password login UI.
+- `src/pages/Signup.tsx`: Firebase signup UI and password strength checks.
+- `src/pages/Dashboard.tsx`: authenticated studio/history/analytics tabs.
+- `src/store/useStore.ts`: persisted preferences, recent prompts, usage stats.
+- `src/components/Navbar.tsx`: responsive nav, auth-aware links, dark mode toggle.
+- `src/components/GeneratePost.tsx`: central generation studio orchestration.
+- `src/components/PostHistory.tsx`: realtime Firestore history list, search/filter/copy/delete.
+- `src/components/ErrorBoundary.tsx`: fallback UI for React crashes.
+- `src/components/GooeyBackground.tsx`: interactive animated gooey background.
+- `src/components/GooeyBackground.css`: supporting blob animation styles.
+- `src/components/studio/ModelSelector.tsx`: local model selection UI.
+- `src/components/studio/PlatformSelector.tsx`: target platform selection UI.
+- `src/components/studio/FormatSelector.tsx`: content type selection UI.
+- `src/components/studio/ToneSelector.tsx`: tone selection UI.
+- `src/components/studio/TopicSelector.tsx`: topic/angle selection UI.
+- `src/components/studio/PromptInputArea.tsx`: prompt textarea, assist chips, sliders.
+- `src/components/studio/PostResultView.tsx`: generated result, metrics, variants, copy/download/feedback.
+- `src/index.css`: global Tailwind and custom design system.
+- `backend/server.js`: Express API, auth, validation, AI orchestration, cache, strategy generation.
+- `backend/LocalAIServer/server.py`: Flask GPT-2 local generation service.
+- `netlify/functions/api.js`: Netlify wrapper for Express app.
+- `vite.config.ts`: frontend dev/build/test configuration.
+- `tailwind.config.js`: Tailwind content/dark mode config.
+- `postcss.config.js`: PostCSS/Tailwind processing.
+- `cypress.config.js`: Cypress E2E configuration.
+- `netlify.toml`: Netlify build, function, redirect config.
+- `vercel.json`: Vercel frontend SPA config.
+- `.env.example`: documented frontend env variables.
+- `backend/.env.example`: documented backend env variables.
+- `src/setupTests.ts`: test matcher setup.
+- `src/mocks/server.ts`: MSW API mocks.
+- `src/components/*.test.tsx`, `src/context/*.test.tsx`, `src/store/*.test.tsx`: unit/accessibility tests, currently stale in places.
+- `cypress/e2e/*.cy.ts`: E2E workflow tests, currently likely requiring updates/mocks.
+- `postl_architecture_analysis.md`: prior architecture/vision analysis.
+- `push_error.txt`, `push_error2.txt`: push/error log artifacts.
+- `background.mp4`, `tree.jpg`: media assets.
+- `backend/firebase-key.json`, `backend/service-account.json`: Firebase credential files.
+
+## 26. Final understanding
+
+POSTL is a premium AI content generation platform. The frontend is a polished React dashboard with authentication, a creator studio, generated result presentation, post history, and usage analytics. The backend authenticates Firebase users, validates generation requests, performs prompt refinement, uses platform/tone/content-type prompt engineering, calls a local Ollama model by default, optionally falls back to Hugging Face, cleans output, scores likely engagement, generates strategy metadata, caches repeated requests, and exposes routes for local/serverless use. The local Python server is an additional GPT-2-based generation engine, but it is not wired into the current Express generation path. The project has a strong product vision and substantial UI/AI logic, but some configuration, tests, and documentation are out of sync with the current code.

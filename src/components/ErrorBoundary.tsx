@@ -32,7 +32,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
             <h2 className="text-3xl font-black text-white mb-4 tracking-tighter uppercase">Neural Studio Error</h2>
             <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 mb-8 text-left">
               <p className="text-red-400 font-mono text-xs break-all leading-relaxed whitespace-pre-wrap">
-                {this.state.error?.toString() || "Unknown unhandled exception"}
+                {import.meta.env.PROD ? 'Something went wrong while loading POSTL. No private diagnostic details are shown in production.' : (this.state.error?.toString() || "Unknown unhandled exception")}
               </p>
             </div>
             <p className="text-slate-400 mb-8 font-medium leading-relaxed text-sm">

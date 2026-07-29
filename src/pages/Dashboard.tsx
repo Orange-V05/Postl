@@ -2,14 +2,18 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import GeneratePost from "../components/GeneratePost";
 import PostHistory from "../components/PostHistory";
-import { FaSignature, FaHistory, FaChartBar, FaRocket } from "react-icons/fa";
+import BrandVoiceForm from "../components/BrandVoiceForm";
+import CampaignForm from "../components/CampaignForm";
+import { FaSignature, FaHistory, FaChartBar, FaRocket, FaFingerprint, FaBullseye } from "react-icons/fa";
 import { useStore } from "../store/useStore";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 
 const tabs = [
   { id: 'generate' as const, label: 'Studio', icon: <FaSignature /> },
-  { id: 'history' as const, label: 'History', icon: <FaHistory /> },
+  { id: 'history' as const, label: 'Library', icon: <FaHistory /> },
+  { id: 'brand' as const, label: 'Brand', icon: <FaFingerprint /> },
+  { id: 'campaign' as const, label: 'Campaign', icon: <FaBullseye /> },
   { id: 'analytics' as const, label: 'Analytics', icon: <FaChartBar /> },
 ];
 
@@ -112,7 +116,7 @@ const AnalyticsPanel: React.FC = () => {
 
 /* ─── Dashboard Page ───────────────────────────────────────────────────────── */
 const Dashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'generate' | 'history' | 'analytics'>('generate');
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]['id']>('generate');
   const auth = useContext(AuthContext);
   const { usageStats } = useStore();
 
@@ -210,6 +214,26 @@ const Dashboard: React.FC = () => {
                 transition={{ duration: 0.3 }}
               >
                 <PostHistory />
+              </motion.div>
+            ) : activeTab === 'brand' ? (
+              <motion.div
+                key="brand"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <BrandVoiceForm />
+              </motion.div>
+            ) : activeTab === 'campaign' ? (
+              <motion.div
+                key="campaign"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <CampaignForm />
               </motion.div>
             ) : (
               <motion.div

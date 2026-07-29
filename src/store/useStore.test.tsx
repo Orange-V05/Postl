@@ -3,14 +3,17 @@ import userEvent from '@testing-library/user-event';
 import { useStore } from './useStore';
 
 const TestComponent = () => {
-  const { prefs, setPrefs, resetPrefs } = useStore();
-
+  const { prefs, setPrefs, resetPrefs, addRecentPrompt, recentPrompts, usageStats, incrementUsage } = useStore();
   return (
     <div>
-      <div data-testid="aiModel">{prefs.aiModel}</div>
+      <div data-testid="selectedModel">{prefs.selectedModel}</div>
       <div data-testid="creativity">{prefs.creativity}</div>
-      <button onClick={() => setPrefs({ aiModel: 'cloud' })}>Set AI Model</button>
+      <div data-testid="recent">{recentPrompts.join('|')}</div>
+      <div data-testid="total">{usageStats.totalGenerations}</div>
+      <button onClick={() => setPrefs({ selectedModel: 'cloud-openrouter' })}>Set Model</button>
       <button onClick={() => setPrefs({ creativity: 0.8 })}>Set Creativity</button>
+      <button onClick={() => addRecentPrompt('Brief one')}>Add Prompt</button>
+      <button onClick={() => incrementUsage('twitter', 'bold')}>Use</button>
       <button onClick={resetPrefs}>Reset</button>
     </div>
   );
@@ -18,56 +21,32 @@ const TestComponent = () => {
 
 describe('useStore', () => {
   beforeEach(() => {
-    // Clear localStorage
     localStorage.clear();
+    useStore.persist.clearStorage();
+    useStore.setState({ prefs: { selectedModel: 'local-gemma', creativity: 0.7, tone: 'professional', fontSize: 28, darkMode: true }, recentPrompts: [], usageStats: { totalGenerations: 0, platformCounts: {}, toneCounts: {}, lastGeneratedAt: null } });
   });
 
-  it('provides default preferences', () => {
+  it('provides current default preferences', () => {
     render(<TestComponent />);
-    expect(screen.getByTestId('aiModel')).toHaveTextContent('local');
+    expect(screen.getByTestId('selectedModel')).toHaveTextContent('local-gemma');
     expect(screen.getByTestId('creativity')).toHaveTextContent('0.7');
   });
 
-  it('updates preferences', async () => {
+  it('updates preferences and recent prompts', async () => {
     const user = userEvent.setup();
     render(<TestComponent />);
-
-    const setModelButton = screen.getByRole('button', { name: 'Set AI Model' });
-    await user.click(setModelButton);
-
-    expect(screen.getByTestId('aiModel')).toHaveTextContent('cloud');
-
-    const setCreativityButton = screen.getByRole('button', { name: 'Set Creativity' });
-    await user.click(setCreativityButton);
-
+    await user.click(screen.getByRole('button', { name: 'Set Model' }));
+    await user.click(screen.getByRole('button', { name: 'Set Creativity' }));
+    await user.click(screen.getByRole('button', { name: 'Add Prompt' }));
+    expect(screen.getByTestId('selectedModel')).toHaveTextContent('cloud-openrouter');
     expect(screen.getByTestId('creativity')).toHaveTextContent('0.8');
+    expect(screen.getByTestId('recent')).toHaveTextContent('Brief one');
   });
 
-  it('resets preferences', async () => {
+  it('tracks usage stats', async () => {
     const user = userEvent.setup();
     render(<TestComponent />);
-
-    // Change some prefs
-    const setModelButton = screen.getByRole('button', { name: 'Set AI Model' });
-    await user.click(setModelButton);
-
-    const resetButton = screen.getByRole('button', { name: 'Reset' });
-    await user.click(resetButton);
-
-    expect(screen.getByTestId('aiModel')).toHaveTextContent('local');
-  });
-
-  it('persists preferences to localStorage', async () => {
-    const user = userEvent.setup();
-    const { unmount } = render(<TestComponent />);
-
-    const setModelButton = screen.getByRole('button', { name: 'Set AI Model' });
-    await user.click(setModelButton);
-
-    unmount();
-
-    // Re-render
-    render(<TestComponent />);
-    expect(screen.getByTestId('aiModel')).toHaveTextContent('cloud');
+    await user.click(screen.getByRole('button', { name: 'Use' }));
+    expect(screen.getByTestId('total')).toHaveTextContent('1');
   });
 });

@@ -2,11 +2,13 @@
   "name": "postl-backend",
   "version": "1.0.0",
   "type": "module",
-  "main": "server.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "concurrently \"node server.js\" \"python LocalAIServer/server.py\"",
-    "start:prod": "node server.js",
-    "build": "echo 'No build step required for backend'"
+    "start": "node src/server.js",
+    "start:prod": "NODE_ENV=production node src/server.js",
+    "start:legacy-local-ai": "python LocalAIServer/server.py",
+    "check": "node --check src/server.js && node --check src/app.js",
+    "build": "npm run check"
   },
   "dependencies": {
     "concurrently": "^9.2.1",
