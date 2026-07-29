@@ -64,3 +64,25 @@ GET /api/models
 ```
 
 `/api/health` reports Firebase Admin state, provider config state, and local cache stats.
+
+## Chosen production backend: Render persistent Node service
+
+POSTL production should use Vercel for the static Vite frontend and Render for the persistent Express backend. The repository includes `render.yaml` for a Render web service rooted at `backend`. Production AI defaults to OpenRouter with Hugging Face as optional fallback; Ollama remains a local-development or separately hosted inference option, not a Vercel serverless dependency.
+
+Render setup:
+
+1. In Render, create a Blueprint or Web Service from `https://github.com/Orange-V05/Postl`.
+2. Use `render.yaml`, or set root directory `backend`, build command `npm ci && npm run build`, start command `npm run start:prod`, and health check `/api/health`.
+3. Configure secret env vars in Render only: `OPENROUTER_API_KEY`, optional `HF_TOKEN`, and `FIREBASE_SERVICE_ACCOUNT_KEY` or a secure credential path. Never expose these through Vercel `VITE_*` vars.
+4. Set `ALLOWED_ORIGINS=https://postl.vercel.app` plus any intentionally supported preview origins. Do not use wildcard CORS with Authorization.
+5. After Render deploys, verify `https://YOUR-RENDER-SERVICE.onrender.com/api/health` and `/api/models`.
+6. Set Vercel `VITE_API_BASE_URL=https://YOUR-RENDER-SERVICE.onrender.com/api` for Production and Preview, then redeploy Vercel.
+
+Vercel Firebase setup:
+
+- Add `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`, and optional `VITE_FIREBASE_MEASUREMENT_ID` in the Vercel dashboard for Production and Preview.
+- Trigger a new Vercel deployment after changing these variables. Vite embeds them at build time.
+- Ensure Firebase Authentication authorized domains include `postl.vercel.app`.
+- Restrict the Firebase browser API key in Google Cloud by HTTP referrer and by required Firebase/Identity Toolkit APIs. Review usage for abuse.
+
+Current limitation: this repository update cannot set Vercel, Firebase Console, Google Cloud, or Render dashboard values because no authenticated credentials are available in this environment.
