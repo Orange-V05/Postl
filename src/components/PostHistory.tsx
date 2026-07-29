@@ -32,7 +32,10 @@ const PostHistory: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    if (!auth?.user) return;
+    if (!auth?.user || !db) {
+      setLoading(false);
+      return;
+    }
 
     const q = query(
       collection(db, 'posts'),
@@ -69,6 +72,7 @@ const PostHistory: React.FC = () => {
   };
 
   const deletePost = async (postId: string) => {
+    if (!db) return;
     try {
       await deleteDoc(doc(db, 'posts', postId));
     } catch (err) {

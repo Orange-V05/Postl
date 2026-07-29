@@ -577,6 +577,45 @@ Working-tree rule: `output.md` remains local-only through `.git/info/exclude` an
 Remote synchronization update: after verification, `main` was pushed to `origin/main` and `git ls-remote origin refs/heads/main` resolved to `23ea7cbd24f08e912294fa01ea8824ca76445905`.
 Security update: a redacted history scan found historical `src/firebase.ts` commits on `origin/main` containing a Firebase browser API key ending in the locally recorded suffix. Current `HEAD` loads Firebase client config from Vite env vars. Manual Google Cloud/Firebase restriction or rotation remains required; history rewriting was not performed because it would require explicit coordination and force-with-lease.
 
+## 7. Production outage: Vercel frontend restoration
+
+Date: 2026-07-29
+Production URL checked: `https://postl.vercel.app`
+
+### Symptom
+
+- `https://postl.vercel.app` and direct route `https://postl.vercel.app/login` returned `200` and `index.html`, so the domain and SPA rewrite were functioning.
+- The deployed app bundle contained the Firebase missing-configuration path and compiled `apiKey:void 0`, proving Vercel built the frontend without required `VITE_FIREBASE_*` variables.
+- Because `AuthProvider` imported `src/firebase.ts` before `ErrorBoundary` mounted, missing Firebase variables could throw at import time and produce a blank page.
+
+### Root cause
+
+The modernization removed hardcoded Firebase client config from `src/firebase.ts`, but Vercel production had not been configured with the required build-time `VITE_FIREBASE_*` environment variables. Vite embeds these variables during build, so the existing production deployment could not be fixed without configuring Vercel variables and redeploying.
+
+### Fix implemented
+
+- `src/firebase.ts` no longer throws during module import when Firebase frontend variables are missing. It exports `firebaseReady`, `firebaseConfigError`, nullable `auth`, nullable `db`, and nullable `firebaseApp`.
+- `AuthContext`, signup, generation, history, brand, and campaign flows now handle missing Firebase configuration safely.
+- `App.tsx` displays a visible deployment diagnostic when Firebase frontend variables are missing.
+- `src/api/client.ts` no longer silently defaults production API calls to same-origin `/api` when `VITE_API_BASE_URL` is absent. Backend-dependent actions report `api_not_configured` instead.
+- `DEPLOYMENT.md` documents exact Vercel frontend settings and environment variables.
+
+### Verification performed
+
+- Verified local `main`, `origin/main`, and `git ls-remote` matched before the outage fix: `48567ce8a8191344cd8a587e0508a376ea709e79`.
+- Fetched `https://postl.vercel.app` and `/login`: both returned `200` with `index.html`.
+- Inspected deployed chunks: current Vercel bundle contained missing Firebase config and `apiKey:void 0`.
+- `npm run build` passed with local `.env.local` present.
+- Temporarily hid `.env.local` and ran `npm run build`; missing-env production build passed, reproducing the Vercel condition without an import-time crash.
+
+### Remaining deployment actions
+
+- Add the required `VITE_FIREBASE_*` variables to the Vercel project for Production, Preview, and Development as appropriate.
+- Add `VITE_API_BASE_URL` after deploying the persistent backend.
+- Redeploy Vercel after configuring variables because Vite reads them at build time.
+- Confirm Firebase Authentication authorized domains include `postl.vercel.app`.
+- Browser-console verification could not be automated in this session because the local browser bridge extension was unavailable.
+
 ### 6.1 Audit findings matrix
 
 | ID | Severity | Finding | Affected files | Reproduction / evidence | Impact | Proposed fix | Implemented fix | Verification |

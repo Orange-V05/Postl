@@ -21,10 +21,17 @@ export class ApiClientError extends Error {
   }
 }
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '');
+const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+export const apiConfigError = import.meta.env.PROD && !rawApiBaseUrl
+  ? 'POSTL backend API is not configured for this deployment. Set VITE_API_BASE_URL to the persistent backend URL and redeploy.'
+  : '';
+const API_BASE_URL = (rawApiBaseUrl || '/api').replace(/\/$/, '');
 
 export async function apiRequest<T>(path: string, options: RequestInit & { token?: string | null; timeoutMs?: number } = {}): Promise<T> {
   const requestId = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+  if (apiConfigError) {
+    throw new ApiClientError(503, { code: 'api_not_configured', message: apiConfigError, requestId, retryable: false });
+  }
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), options.timeoutMs ?? 60000);
   const headers = new Headers(options.headers);

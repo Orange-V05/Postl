@@ -18,6 +18,36 @@ Ollama is not suitable for ordinary short-lived Netlify/Vercel serverless functi
 Frontend variables are in `.env.example`.
 Backend variables are in `backend/.env.example`.
 
+### Vercel frontend settings
+
+Use these settings for the `Orange-V05/Postl` Vercel frontend project:
+
+- Framework preset: Vite
+- Root directory: repository root
+- Install command: project default or `npm ci`
+- Build command: `npm run build`
+- Output directory: `dist`
+- Production branch: `main`
+
+Required Vercel frontend environment variables for Production, Preview, and Development scopes:
+
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+- optional `VITE_FIREBASE_MEASUREMENT_ID`
+- `VITE_API_BASE_URL`, required for generation/repurposing in production and must point to the persistent backend URL
+
+Vite embeds `VITE_*` variables at build time. After changing any Vercel environment variable, trigger a fresh deployment. Restarting an already-built deployment is not sufficient.
+
+Do not put Firebase Admin service-account JSON, private keys, OpenRouter keys, Hugging Face tokens, or backend secrets into `VITE_*` variables. Frontend variables are public in the browser bundle.
+
+If the Firebase frontend variables are missing, POSTL now renders a visible deployment-configuration diagnostic instead of a white screen. Login, signup, dashboard persistence, and authenticated generation still require valid Firebase configuration.
+
+Firebase Console must include `postl.vercel.app` in Authentication authorized domains for email/password and OAuth redirects. Add preview domains only if they are intentionally supported. If App Check is enabled, configure the Vercel production domain there too.
+
 Production must configure:
 
 - `ALLOWED_ORIGINS`

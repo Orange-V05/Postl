@@ -127,6 +127,11 @@ const GeneratePost: React.FC = () => {
 
   const handleGenerate = async () => {
     if (!prompt.trim() || !auth?.user) return;
+    if (!db) {
+      setResult('POSTL is missing Firebase configuration for this deployment. Public pages are available, but authenticated generation and saving are disabled until Vercel Firebase environment variables are configured.');
+      return;
+    }
+    const firestore = db;
 
     setLoading(true);
     setResult('');
@@ -195,7 +200,7 @@ const GeneratePost: React.FC = () => {
         timestamp: serverTimestamp()
       };
 
-      addDoc(collection(db, 'posts'), postData).catch(err => console.error("Firestore save failed:", err));
+      addDoc(collection(firestore, 'posts'), postData).catch(err => console.error("Firestore save failed:", err));
 
     } catch (error: any) {
       console.error("[Connectivity Error] Full Detail:", error);
@@ -261,7 +266,7 @@ const GeneratePost: React.FC = () => {
   };
 
   const handleFeedback = async (type: 'helpful' | 'unhelpful') => {
-    if (!auth?.user || !result) return;
+    if (!auth?.user || !result || !db) return;
     try {
       await addDoc(collection(db, 'feedback'), {
         userId: auth.user.uid,
