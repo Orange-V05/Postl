@@ -574,6 +574,8 @@ Date: 2026-07-29
 Base commit verified: `fbf1ef4 Modernize-POSTL-architecture-security`
 Branch verified: `main`, ahead of `origin/main` by one commit.
 Working-tree rule: `output.md` remains local-only through `.git/info/exclude` and is not committed.
+Remote synchronization update: after verification, `main` was pushed to `origin/main` and `git ls-remote origin refs/heads/main` resolved to `23ea7cbd24f08e912294fa01ea8824ca76445905`.
+Security update: a redacted history scan found historical `src/firebase.ts` commits on `origin/main` containing a Firebase browser API key ending in the locally recorded suffix. Current `HEAD` loads Firebase client config from Vite env vars. Manual Google Cloud/Firebase restriction or rotation remains required; history rewriting was not performed because it would require explicit coordination and force-with-lease.
 
 ### 6.1 Audit findings matrix
 

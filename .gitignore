@@ -21,6 +21,9 @@ yarn-error.log*
 push_error*.txt
 backend_tracked_deps.txt
 stage2-*.tmp
+output.md
+output1
+.local-reports/
 
 # OS files
 .DS_Store
