@@ -16,7 +16,7 @@ export function classifyFetchError(err, provider) {
 export async function fetchWithTimeout(url, options = {}, timeoutMs = 45000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  const signal = options.signal || controller.signal;
+  const signal = options.signal ? AbortSignal.any([options.signal, controller.signal]) : controller.signal;
   try {
     return await fetch(url, { ...options, signal });
   } finally {

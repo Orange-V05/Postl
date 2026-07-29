@@ -5,13 +5,14 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "start:prod": "NODE_ENV=production node src/server.js",
+    "start:prod": "node src/server.js",
     "start:legacy-local-ai": "python LocalAIServer/server.py",
-    "check": "node --check src/server.js && node --check src/app.js",
-    "build": "npm run check"
+    "check": "node scripts/check-js-syntax.js",
+    "config:check": "node scripts/config-check.js",
+    "smoke:import": "node -e \"import('./src/app.js').then(() => console.log('app import ok'))\"",
+    "build": "npm run check && npm run config:check && npm run smoke:import"
   },
   "dependencies": {
-    "concurrently": "^9.2.1",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",

@@ -5,7 +5,7 @@ import { env } from './config/env.js';
 import { initializeFirebaseAdmin } from './config/firebaseAdmin.js';
 import { requestId } from './middleware/requestId.js';
 import { apiRateLimit } from './middleware/rateLimit.js';
-import { errorHandler, notFound } from './middleware/errorHandler.js';
+import { ApiError, errorHandler, notFound } from './middleware/errorHandler.js';
 import healthRoutes from './routes/health.routes.js';
 import generationRoutes from './routes/generation.routes.js';
 import modelsRoutes from './routes/models.routes.js';
@@ -27,7 +27,14 @@ export function createApp() {
     },
     credentials: true,
   }));
-  app.use(express.json({ limit: '1mb' }));
+  app.use((req, _res, next) => {
+    const hasBody = req.headers['content-length'] || req.headers['transfer-encoding'];
+    if (hasBody && ['POST', 'PUT', 'PATCH'].includes(req.method) && req.is('application/json') === false) {
+      return next(new ApiError('unsupported_media_type', 'Requests with a body must use application/json.', 415, false));
+    }
+    return next();
+  });
+  app.use(express.json({ limit: '1mb', strict: true }));
   app.use(apiRateLimit);
 
   const api = express.Router();
