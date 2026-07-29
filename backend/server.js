@@ -1,2 +1,2 @@
 export { default } from './src/app.js';
-import './src/server.js';
+export { createApp } from './src/app.js';

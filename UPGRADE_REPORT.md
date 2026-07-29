@@ -567,3 +567,62 @@ Implemented fixes:
 - Production deployment still requires real Firebase Admin credentials and AI provider configuration.
 - Ollama requires a persistent host and should not be used as a standard short-lived serverless backend provider.
 - The ignored local `backend/service-account.json` appears malformed and should be replaced or removed locally.
+
+## 6. Stage 2 Production Readiness Audit
+
+Date: 2026-07-29
+Base commit verified: `fbf1ef4 Modernize-POSTL-architecture-security`
+Branch verified: `main`, ahead of `origin/main` by one commit.
+Working-tree rule: `output.md` remains local-only through `.git/info/exclude` and is not committed.
+
+### 6.1 Audit findings matrix
+
+| ID | Severity | Finding | Affected files | Reproduction / evidence | Impact | Proposed fix | Implemented fix | Verification |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| S2-001 | High | Backend compatibility wrapper imported `src/server.js` as a side effect, so importing `backend/server.js` could start an HTTP listener. | `backend/server.js`, `backend/src/server.js` | Inspect `backend/server.js`: `import './src/server.js'`. | Test imports and serverless wrappers can open duplicate ports or create side effects. | Keep app import pure and isolate listening in one executable server module. | `backend/server.js` now exports app/createApp only. `src/server.js` exports `startServer`/`stopServer` and listens only outside serverless contexts when `POSTL_NO_LISTEN` is not set. | `cd backend && npm run build` passed. Smoke import prints `app import ok` without listener log. |
+| S2-002 | High | Backend build script checked only two JS files and did not validate config/import behavior. | `backend/package.json`, `backend/scripts/check-js-syntax.js`, `backend/scripts/config-check.js` | Previous script checked only `src/server.js` and `src/app.js`. | Syntax errors in controllers, routes, providers, scripts, and validation files could ship. | Add all-file syntax check, config validation, and import smoke test. | Added `scripts/check-js-syntax.js`, `scripts/config-check.js`, `smoke:import`, and expanded `build`. | `cd backend && npm run build` checked 32 JS files, ran config check, and smoke import. |
+| S2-003 | High | Firebase Admin remains unavailable locally because ignored `backend/service-account.json` is malformed. | Local `backend/service-account.json`, `backend/src/config/firebaseAdmin.js` | Build/config-check output: `Bad escaped character in JSON at position 1472`. | Protected routes return `auth_service_unavailable`; Firebase authentication cannot be claimed functional locally. | Replace/remove malformed local credential, configure valid `FIREBASE_SERVICE_ACCOUNT_KEY` or path, rotate exposed keys. | Documented as active blocker. No secret file was committed. | `cd backend && npm run build` shows redacted development warning and config state. |
+| S2-004 | Critical | Dependency audit still reports vulnerabilities. Root has critical/high/moderate issues. Backend is reduced but still has Firebase Admin transitive `uuid` vulnerabilities requiring breaking remediation. | `package.json`, `package-lock.json`, `backend/package.json`, `backend/package-lock.json` | Root audit: 22 vulnerabilities after removing unused `axios`/`openai`. Backend audit: 8 moderate transitive `uuid` advisories after safe audit fix. | Known vulnerable dependency tree. Some root findings are dev-only, but Firebase/Admin transitive issues remain relevant. | Remove unused risky dependencies, apply non-force fixes, then evaluate breaking upgrades separately. | Removed unused root `axios` and `openai`; removed unused backend `concurrently`; ran backend `npm audit fix`. Root `npm audit fix` timed out and requires further pass. | Builds/tests pass after dependency changes. Audits still fail and remain open. |
+| S2-005 | High | Cypress was only verified previously; real Cypress run is not production-ready and timed out. Specs are stale and target port 3000 while Vite uses 3005. | `cypress.config.js`, `cypress/e2e/*.cy.ts`, `vite.config.ts` | `npm run test:e2e` timed out after 180 seconds. Specs use fake login and obsolete UI/scheduling assumptions. | CI/E2E cannot prove working user flows. | Replace E2E setup with automatic server startup, deterministic auth/provider mocks or Firebase emulator, and current UI flows. | Documented gap. Not fixed in this focused commit. | Real Cypress command timed out; binary verification alone is insufficient. |
+| S2-006 | High | Brand Voice and Campaign features are mostly frontend forms and are not complete workspace capabilities. | `src/components/BrandVoiceForm.tsx`, `src/components/CampaignForm.tsx`, `src/components/GeneratePost.tsx`, Firestore rules | Source inspection shows forms exist, but generation does not load/use brand/campaign data beyond ID fields, and CRUD/versioning/pagination/analysis lifecycle are incomplete. | Product claims overstate functional readiness. | Implement authenticated CRUD, schema validation, selected brand/campaign integration in generation, version tracking, and tests. | Documented gap. | Source inspection only, no passing CRUD/E2E tests exist. |
+| S2-007 | High | Post persistence is still client-side and forgeable. | `src/components/GeneratePost.tsx`, `firestore.rules` | `GeneratePost.tsx` calls `addDoc(collection(db, 'posts'), postData)` from client. | Provider metadata, prompt version, idempotency keys, ownership, and server timestamps are not authoritatively enforced by backend. | Move generated-record persistence to backend or add strict backend save route with authenticated UID. | Documented gap. | Source inspection. |
+| S2-008 | Medium | Request body handling did not classify malformed JSON/content-type errors explicitly. | `backend/src/app.js`, `backend/src/middleware/errorHandler.js` | Express JSON parser errors would flow as generic bad/internal errors. | API clients receive inconsistent errors. | Add content-type guard and normalized `malformed_json`, `payload_too_large`, `unsupported_media_type`. | Implemented guard and normalized parser/limit error classification. | `cd backend && npm run build` passed. Dedicated integration tests still needed. |
+| S2-009 | Medium | Provider timeout helper ignored caller abort signal when its own timeout was active. | `backend/src/services/providers/provider.interface.js` | `fetchWithTimeout` used `options.signal || controller.signal`. | Request deadlines and client cancellation are unreliable. | Combine caller and timeout signals. | Uses `AbortSignal.any([options.signal, controller.signal])` when caller signal exists. | Syntax/build validation passed. Runtime cancellation tests still needed. |
+| S2-010 | Medium | `.gitignore` missed local artifacts such as TypeScript build info, Cypress screenshots/videos/downloads, temp logs, and push error logs. | `.gitignore` | `git check-ignore` covered env/build/dependency/service-account paths but missed several local artifacts. | Accidental future commits of generated files or local logs are possible. | Expand ignore rules. | Added `*.tsbuildinfo`, `*.log`, `push_error*.txt`, `backend_tracked_deps.txt`, `stage2-*.tmp`, `coverage/`, Cypress artifacts. | `git status` shows no tracked suspicious artifacts. |
+| S2-011 | Medium | Route contract documentation was incomplete. | `ARCHITECTURE.md` | Docs did not contain method/auth/schema/persistence/rate-limit table. | Frontend-backend drift and unclear API guarantees. | Add route contract table. | Added in Stage 2 documentation update. | Manual doc/source inspection. |
+| S2-012 | Medium | Test suite remains shallow and allows warnings. | `src/**/*.test.*`, component code | Unit tests pass 5 files / 9 tests but warnings remain for React Router future flags and Framer Motion animation. | Passing tests are not strong production evidence. | Expand tests and fail unexpected warnings after resolving known warnings. | Documented gap. | `npm run test:unit` passes with warnings. |
+| S2-013 | Medium | Root output logging to `output.md` hit Windows file locking after timed-out Cypress. | `output.md` local-only | Shell append returned `The process cannot access the file because it is being used by another process.` | Terminal-output log may lag until lock clears. | Avoid parallel writes to `output.md`; use single writer or direct file overwrite after command completion. | Documented operational issue. `output.md` remains ignored and local-only. | `git check-ignore -v output.md` confirmed local exclude. |
+
+### 6.2 Stage 2 validation performed so far
+
+- `git status --short --branch`: verified `main...origin/main [ahead 1]` with only Stage 2 working changes.
+- `npm run build`: passed after dependency changes. Vite 6.4.3 built 483 modules; Firebase chunk remains about 497 kB raw / 114 kB gzip.
+- `npm run test:unit`: passed 5 files / 9 tests, with known React Router and Framer Motion warnings.
+- `cd backend && npm run build`: passed. It now checks 32 JS files, validates config, and smoke-imports the app.
+- `npm audit --audit-level=moderate`: still fails at root with 22 vulnerabilities after removing unused direct dependencies.
+- `cd backend && npm audit --audit-level=moderate`: still fails with 8 moderate Firebase Admin transitive `uuid` issues after safe audit fix.
+- `npm run test:e2e`: actual Cypress run timed out after 180 seconds. This is a real failure and replaces the earlier weaker Cypress binary verification claim.
+- `git check-ignore -v output.md .env .env.local dist build backend\\LocalAIServer\\venv backend\\node_modules backend\\service-account.json`: confirmed high-risk local paths are ignored. Additional ignore coverage was added for missed artifacts.
+
+### 6.3 Stage 2 implemented fixes in this checkpoint
+
+- Made backend import wrappers pure and removed server-start side effects from `backend/server.js`.
+- Added explicit `startServer()` and `stopServer()` exports with graceful `SIGTERM`/`SIGINT` shutdown handling.
+- Added all-JS backend syntax checking.
+- Added backend config-check command that reports safe Firebase/provider state without starting a listener.
+- Added backend import smoke command.
+- Added normalized unsupported media type, malformed JSON, and payload-too-large error classification.
+- Fixed provider timeout helper to combine request cancellation and timeout signals.
+- Removed unused direct root dependencies `axios` and `openai`.
+- Removed unused backend dependency `concurrently`.
+- Applied safe backend audit fixes, reducing backend audit to transitive Firebase Admin `uuid` advisories.
+- Expanded `.gitignore` for local generated/test/log artifacts.
+
+### 6.4 Remaining Stage 2 blockers
+
+- Root dependency audit still fails and needs another safe fix pass plus possible planned major upgrades.
+- Backend Firebase Admin transitive audit issues need a deliberate Firebase Admin upgrade/downgrade decision, not blind `--force`.
+- Firebase Admin is not locally functional until malformed local credentials are replaced or removed.
+- Cypress E2E must be rebuilt and made deterministic; current specs are stale and not evidence of real workflows.
+- Brand Voice, Campaigns, post persistence, editor, repurposing UI, pagination/history, Firestore emulator tests, API integration tests, and accessibility tests remain incomplete.
+- Git-history secret scanning needs a robust tool or carefully quoted command. Do not rewrite history automatically; rotate any service account or API key that was ever exposed.

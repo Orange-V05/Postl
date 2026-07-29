@@ -18,8 +18,10 @@ export function notFound(req, res, next) {
 }
 
 export function errorHandler(err, req, res, _next) {
-  const status = Number.isInteger(err.status) ? err.status : 500;
-  const code = err.code || (status >= 500 ? 'internal_error' : 'bad_request');
+  const isJsonSyntaxError = err instanceof SyntaxError && err.status === 400 && 'body' in err;
+  const isTooLarge = err?.type === 'entity.too.large';
+  const status = isJsonSyntaxError ? 400 : isTooLarge ? 413 : Number.isInteger(err.status) ? err.status : 500;
+  const code = err.code || (isJsonSyntaxError ? 'malformed_json' : isTooLarge ? 'payload_too_large' : status >= 500 ? 'internal_error' : 'bad_request');
   const retryable = Boolean(err.retryable);
   const requestId = req.requestId;
   const isProduction = process.env.NODE_ENV === 'production';
