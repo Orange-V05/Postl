@@ -3,7 +3,7 @@ import { FaLock, FaEnvelope, FaRocket, FaArrowRight, FaHome, FaEye, FaEyeSlash, 
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase';
+import { auth, firebaseConfigError } from '../firebase';
 
 const SignupPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -41,6 +41,7 @@ const SignupPage: React.FC = () => {
     setLoading(true);
 
     try {
+      if (!auth) throw new Error(firebaseConfigError || 'Firebase authentication is not configured.');
       await createUserWithEmailAndPassword(auth, email, password);
       navigate('/dashboard');
     } catch (error: any) {

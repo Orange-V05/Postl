@@ -24,7 +24,10 @@ export default function BrandVoiceForm() {
 
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!auth?.user) return;
+    if (!auth?.user || !db) {
+      setStatus('Firebase is not configured for this deployment. Brand profiles cannot be saved yet.');
+      return;
+    }
     await addDoc(collection(db, 'brands'), {
       userId: auth.user.uid,
       ...profile,

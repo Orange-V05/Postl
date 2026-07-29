@@ -13,7 +13,10 @@ export default function CampaignForm() {
 
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!auth?.user) return;
+    if (!auth?.user || !db) {
+      setStatus('Firebase is not configured for this deployment. Campaigns cannot be saved yet.');
+      return;
+    }
     await addDoc(collection(db, 'campaigns'), {
       userId: auth.user.uid,
       ...campaign,

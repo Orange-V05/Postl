@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AuthProvider, AuthContext } from './AuthContext';
 
-vi.mock('../firebase', () => ({ auth: { currentUser: { getIdToken: vi.fn() } } }));
+vi.mock('../firebase', () => ({ auth: { currentUser: { getIdToken: vi.fn() } }, firebaseReady: true, firebaseConfigError: '' }));
 
 vi.mock('firebase/auth', () => ({
   onAuthStateChanged: vi.fn(),
