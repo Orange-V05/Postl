@@ -621,6 +621,7 @@ Working-tree rule: `output.md` remains local-only through `.git/info/exclude` an
 ### 6.4 Remaining Stage 2 blockers
 
 - Root dependency audit still fails and needs another safe fix pass plus possible planned major upgrades.
+- Follow-up root lockfile updates from `npm audit fix` removed the previously reported critical root advisories, but root audit still fails with 22 vulnerabilities classified as 1 low, 2 moderate, and 19 high. Remaining root fixes require deliberate breaking-change decisions around Jest, esbuild, and React Router related dependency chains.
 - Backend Firebase Admin transitive audit issues need a deliberate Firebase Admin upgrade/downgrade decision, not blind `--force`.
 - Firebase Admin is not locally functional until malformed local credentials are replaced or removed.
 - Cypress E2E must be rebuilt and made deterministic; current specs are stale and not evidence of real workflows.
