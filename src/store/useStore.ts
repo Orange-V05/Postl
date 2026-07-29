@@ -23,6 +23,7 @@ interface AppState {
   recentPrompts: string[];
   addRecentPrompt: (prompt: string) => void;
   clearRecentPrompts: () => void;
+  resetSessionState: () => void;
   usageStats: UsageStats;
   incrementUsage: (platform: string, tone: string) => void;
 }
@@ -59,6 +60,7 @@ export const useStore = create<AppState>()(
           return { recentPrompts: [prompt, ...filtered].slice(0, 8) };
         }),
       clearRecentPrompts: () => set({ recentPrompts: [] }),
+      resetSessionState: () => set({ prefs: defaultPrefs, recentPrompts: [], usageStats: defaultUsageStats }),
 
       usageStats: defaultUsageStats,
       incrementUsage: (platform, tone) =>

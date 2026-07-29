@@ -668,3 +668,54 @@ The modernization removed hardcoded Firebase client config from `src/firebase.ts
 - Cypress E2E must be rebuilt and made deterministic; current specs are stale and not evidence of real workflows.
 - Brand Voice, Campaigns, post persistence, editor, repurposing UI, pagination/history, Firestore emulator tests, API integration tests, and accessibility tests remain incomplete.
 - Git-history secret scanning needs a robust tool or carefully quoted command. Do not rewrite history automatically; rotate any service account or API key that was ever exposed.
+
+## 8. Production Functionality Restoration
+
+Date: 2026-07-29
+Starting commit: `e04fe2525373088423f5ba1a6e6a0b84b9e0f808`
+
+### Initial production state
+
+- Local `HEAD`, `origin/main`, and `git ls-remote origin refs/heads/main` all resolved to `e04fe2525373088423f5ba1a6e6a0b84b9e0f808` before this phase began.
+- `https://postl.vercel.app` and `/login` returned HTTP 200, but that only proved the static SPA and rewrite were available.
+- The Vercel bundle still contained Firebase configuration diagnostics and compiled Firebase config with undefined values, confirming that Vercel had not been configured with required `VITE_FIREBASE_*` variables.
+- The local `.env.local` contains the Firebase browser configuration needed for development, but `VITE_API_BASE_URL` is empty and no production backend URL is configured. Values were inspected only by presence/length/suffix and were not printed.
+- Vercel CLI is not authenticated in this environment, so Vercel env vars, deployment logs, and deployment IDs cannot be read or changed here.
+
+### Fixes implemented in this phase
+
+- Added `src/config/firebaseConfig.ts`, a typed Firebase client configuration validator.
+- Firebase validation now distinguishes development diagnostics from a safe generic production user message.
+- Firebase initialization remains nullable and safe, but now uses `getApps()[0] ?? initializeApp(...)` to avoid duplicate-app errors during hot reload or tests.
+- Analytics remains lazy, optional, browser-only, non-blocking, and disabled during tests.
+- Added focused Firebase config tests for complete config, missing values, production-safe messages, and malformed config.
+- Added `src/config/apiConfig.ts`, a typed API base URL validator.
+- Production now rejects missing, relative, non-HTTPS, and localhost `VITE_API_BASE_URL` values instead of silently calling `/api` or localhost.
+- API requests now combine caller cancellation with request timeout using `AbortSignal.any`.
+- AuthContext now exposes an explicit status model: `configuration-unavailable`, `initializing`, `unauthenticated`, `authenticated`, and `error`.
+- Sign-out now clears persisted Zustand UI/session state through `resetSessionState` and does not manually store Firebase ID tokens.
+- Added `.nvmrc` and Node/npm engine metadata to root and backend packages.
+- Added `render.yaml` choosing Render as the persistent backend host. Production primary provider is OpenRouter; Hugging Face is optional fallback; Ollama remains local/separately hosted only.
+- Updated `DEPLOYMENT.md` with exact Vercel Firebase env vars, Render backend setup, backend secret placement, Firebase authorized-domain steps, API-key restriction steps, and redeployment requirements.
+
+### Validation performed
+
+- `npm run build` passed. Vite built 485 modules. Firebase chunk remains about 497 kB raw / 114 kB gzip.
+- `npm run test:unit` passed: 7 test files, 19 tests. Known React Router future warnings and Framer Motion jsdom animation warning remain.
+- `cd backend && npm run build` passed. Backend checked 32 JS files, ran config check, and smoke-imported the app.
+
+### External actions still required before production is fully functional
+
+- Add required Vercel build-time variables in the Vercel dashboard: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`, optional `VITE_FIREBASE_MEASUREMENT_ID`.
+- Deploy the Render backend using `render.yaml` or equivalent persistent Node service configuration.
+- Configure Render secrets: `FIREBASE_SERVICE_ACCOUNT_KEY` or secure credential path, `OPENROUTER_API_KEY`, optional `HF_TOKEN`, and production `ALLOWED_ORIGINS=https://postl.vercel.app`.
+- Set Vercel `VITE_API_BASE_URL` to the deployed backend `/api` URL and redeploy Vercel.
+- Confirm Firebase Authentication authorized domains include `postl.vercel.app` and any intentional preview domains.
+- Restrict or rotate the historically exposed Firebase browser API key in Google Cloud. A Firebase browser key is not a server secret, but an unrestricted Google API key can be abused.
+- Verify Firebase Auth, Firestore, backend CORS, `/api/health`, `/api/models`, authenticated generation, persistence, Brand Voice, Campaigns, and repurposing against the deployed services.
+
+### Remaining blockers
+
+- No Vercel, Firebase Console, Google Cloud Console, Render, OpenRouter, or Hugging Face credentials are available in this environment, so dashboard configuration and real production auth/generation cannot be completed or claimed.
+- Local backend Firebase Admin is still unavailable because the ignored local `backend/service-account.json` is malformed.
+- Brand Voice, Campaigns, post persistence, editor, repurposing UI, Firestore emulator tests, E2E tests, dependency audit remediation, accessibility tests, and full production workflow verification remain incomplete from the larger modernization scope.

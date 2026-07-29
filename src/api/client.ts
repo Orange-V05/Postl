@@ -1,3 +1,5 @@
+import { validateApiBaseUrl } from '../config/apiConfig';
+
 export interface ApiEnvelope<T> {
   data: T | null;
   error: null | { code: string; message: string; requestId?: string; retryable?: boolean; details?: unknown };
@@ -21,11 +23,9 @@ export class ApiClientError extends Error {
   }
 }
 
-const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-export const apiConfigError = import.meta.env.PROD && !rawApiBaseUrl
-  ? 'POSTL backend API is not configured for this deployment. Set VITE_API_BASE_URL to the persistent backend URL and redeploy.'
-  : '';
-const API_BASE_URL = (rawApiBaseUrl || '/api').replace(/\/$/, '');
+const apiBaseUrlState = validateApiBaseUrl(import.meta.env.VITE_API_BASE_URL, Boolean(import.meta.env.PROD));
+export const apiConfigError = apiBaseUrlState.ready ? '' : apiBaseUrlState.error;
+const API_BASE_URL = apiBaseUrlState.baseUrl;
 
 export async function apiRequest<T>(path: string, options: RequestInit & { token?: string | null; timeoutMs?: number } = {}): Promise<T> {
   const requestId = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`;
@@ -33,6 +33,7 @@ export async function apiRequest<T>(path: string, options: RequestInit & { token
     throw new ApiClientError(503, { code: 'api_not_configured', message: apiConfigError, requestId, retryable: false });
   }
   const controller = new AbortController();
+  const signal = options.signal ? AbortSignal.any([options.signal, controller.signal]) : controller.signal;
   const timeout = window.setTimeout(() => controller.abort(), options.timeoutMs ?? 60000);
   const headers = new Headers(options.headers);
   headers.set('Content-Type', 'application/json');
@@ -40,7 +41,7 @@ export async function apiRequest<T>(path: string, options: RequestInit & { token
   if (options.token) headers.set('Authorization', `Bearer ${options.token}`);
 
   try {
-    const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers, signal: options.signal || controller.signal });
+    const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers, signal });
     const envelope = await response.json().catch(() => ({ data: null, error: { code: 'invalid_json', message: 'Server returned an invalid response.', requestId, retryable: false } })) as ApiEnvelope<T>;
     if (!response.ok || envelope.error) {
       throw new ApiClientError(response.status, envelope.error || { code: 'http_error', message: `Request failed with ${response.status}`, requestId, retryable: response.status >= 500 });
