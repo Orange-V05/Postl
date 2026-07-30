@@ -12,6 +12,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:unit": "vitest run",
+    "config:firebase": "node scripts/verify-firebase-auth-config.mjs",
+    "config:firebase:rest": "node scripts/verify-firebase-auth-config.mjs --verify-rest",
     "test:e2e": "cypress run",
     "test:ci": "vitest run && cypress run",
     "cypress:open": "cypress open",
