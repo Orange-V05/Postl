@@ -17,7 +17,7 @@ export const generationSchema = Joi.object({
   locale: Joi.string().trim().max(32).default('en-US'),
   creativity: Joi.number().min(0).max(1).default(0.7),
   variants: Joi.number().integer().min(1).max(3).default(1),
-  modelId: Joi.string().trim().max(128).default('local-gemma'),
+  modelId: Joi.string().trim().max(128).default('balanced-cloud'),
   callToAction: Joi.string().trim().max(300).allow('').default(''),
   constraints: Joi.string().trim().max(1000).allow('').default(''),
 }).unknown(false);

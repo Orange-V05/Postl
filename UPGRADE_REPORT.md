@@ -776,3 +776,63 @@ Interpretation: the local `.env.local` Firebase browser configuration points to 
 Live bundle comparison attempted to locate local safe identifiers in Vercel chunks. The inspected production chunks did not expose the local `projectId`, `authDomain`, sender ID, app ID suffix, or API key suffix as plain strings. Because Vite/minification can obscure these strings, this is not conclusive proof of a wrong Vercel config, but it means the Vercel dashboard Production values still must be inspected directly.
 
 A safe script was added: `scripts/verify-firebase-auth-config.mjs`, exposed through `npm run config:firebase` and `npm run config:firebase:rest`. It provides repeatable non-browser verification without printing API keys, passwords, tokens, or disposable account details.
+
+## Provider-Agnostic AI MVP Refactor
+
+Date: 2026-07-30
+
+Objective: replace production reliance on local Ollama with a provider-agnostic backend architecture suitable for an MVP using OpenRouter as the recommended production provider and Ollama as a local-development option.
+
+Implemented fixes:
+
+- Added `backend/src/services/providers/modelRegistry.js` with friendly POSTL model IDs: `balanced-cloud`, `local-gemma`, and `economy-hf`.
+- Updated provider registry to load configured providers, expose diagnostics, map friendly model IDs to provider-specific model names, and fall back only to enabled providers.
+- Updated OpenRouter, Ollama, and Hugging Face providers to accept provider-specific model IDs, expose capability metadata, and classify HTTP, network, timeout, rate-limit, and configuration failures through stable provider error codes.
+- Changed production default provider behavior: unset `AI_PRIMARY_PROVIDER` resolves to OpenRouter in production and Ollama in development. Ollama is disabled as a production localhost default.
+- Updated `/api/models` to return enabled friendly models, active provider, fallback order, and provider diagnostics without exposing secrets.
+- Added server-side per-user daily generation quota enforcement through Firebase Admin Firestore `usageQuotas` documents. Defaults: 25 generations/day and 10 repurposes/day.
+- Hardened backend error envelopes to include request ID, retryability, provider name when safe, and Retry-After metadata for quota/rate-limit responses.
+- Hardened frontend API client to classify backend-not-configured, timeout, network-unavailable, structured API errors, request IDs, and retry metadata.
+- Removed frontend fake Local Ollama fallback model and switched default selected model to `balanced-cloud`.
+- Added `AI_PROVIDER_ARCHITECTURE.md` comparing the old Ollama-oriented design with the new provider-agnostic design.
+
+Affected files:
+
+- `backend/src/config/env.js`
+- `backend/src/services/providers/*`
+- `backend/src/services/generation/generation.service.js`
+- `backend/src/controllers/generation.controller.js`
+- `backend/src/services/quota/quota.service.js`
+- `backend/src/routes/models.routes.js`
+- `backend/.env.example`
+- `src/api/client.ts`
+- `src/api/client.test.ts`
+- `src/components/GeneratePost.tsx`
+- `src/components/studio/ModelSelector.tsx`
+- `src/store/useStore.ts`
+- `DEPLOYMENT.md`
+- `AI_PROVIDER_ARCHITECTURE.md`
+
+Remaining limitations: live OpenRouter credentials and backend host configuration are external dashboard work; deeper mocked Supertest provider-chain tests are still recommended before claiming complete production readiness; repurposing quota must be wired when the repurposing controller is completed.
+
+## Provider-Agnostic Production Activation
+
+Date: 2026-07-30
+
+Starting state: the provider-agnostic refactor existed in the working tree but was not committed or pushed, so production could only see the prior deployed behavior.
+
+Implemented activation fixes:
+
+- Added stale selected-model migration for persisted `postl-v4-store` data. Obsolete IDs such as `local-gemma`, raw OpenRouter IDs, and old Ollama variants normalize to `balanced-cloud`.
+- Added ModelSelector regression tests proving backend `balanced-cloud` is rendered, stale local selections are replaced, and no Ollama fallback is injected when the backend is empty or offline.
+- Changed repurposing default model from `local-gemma` to `balanced-cloud`.
+- Wired per-user quota enforcement into repurposing as well as generation.
+- Added `OPENROUTER_FREE_MODELS` and `ALLOW_PAID_AI_MODELS=false` cost-safety controls. OpenRouter model candidates are administrator-controlled and do not switch to paid models unless explicitly allowed.
+- Added Firebase Admin credential support for `FIREBASE_SERVICE_ACCOUNT_JSON` and discrete `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY` environment variables.
+- Added `/api/ready` readiness endpoint separate from `/api/health` liveness.
+- Updated CORS to allow no-Origin server-to-server health checks while keeping browser origins allowlisted.
+- Updated backend server binding to `0.0.0.0` for Render/container compatibility.
+- Updated `render.yaml` to use a free Render backend service with OpenRouter production settings and no Ollama deployment.
+- Updated deployment documentation with the exact Render, OpenRouter, Firebase Admin, and Vercel `VITE_API_BASE_URL` activation checklist.
+
+Production status after code changes: repository is deployment-ready for a persistent Render backend, but actual Render deployment, OpenRouter key configuration, Firebase Admin secret configuration, Vercel `VITE_API_BASE_URL`, and live production generation require external dashboard credentials and must be verified after those settings are applied.

@@ -8,7 +8,7 @@ POSTL is a premium Content Intelligence Workspace for generating, organizing, an
 - Premium React/Vite dashboard and landing page.
 - Content generation studio with platform, format, topic, tone, creativity, and backend-controlled model selection.
 - Modular Express backend with request IDs, safe errors, validated environment, Firebase Admin auth, provider abstraction, and consistent response envelopes.
-- AI provider chain: Ollama primary by default, OpenRouter and Hugging Face optional fallbacks.
+- AI provider chain: OpenRouter is the recommended production default, Ollama is preserved for local development, and Hugging Face is an optional fallback through the provider registry.
 - Brand Voice DNA and Campaign draft forms backed by Firestore.
 - Post library/history backed by Firestore.
 - Repurposing API foundation at `POST /api/repurpose`.

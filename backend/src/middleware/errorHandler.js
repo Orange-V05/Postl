@@ -25,6 +25,10 @@ export function errorHandler(err, req, res, _next) {
   const retryable = Boolean(err.retryable);
   const requestId = req.requestId;
   const isProduction = process.env.NODE_ENV === 'production';
+  const provider = err.provider || err.details?.provider;
+  const retryAfterSeconds = err.retryAfterSeconds || err.details?.retryAfterSeconds || (status === 429 ? 86400 : undefined);
+
+  if (retryAfterSeconds) res.setHeader('Retry-After', String(retryAfterSeconds));
 
   logger.error(err.message || 'Unhandled error', {
     requestId,
@@ -42,6 +46,8 @@ export function errorHandler(err, req, res, _next) {
       message: status >= 500 && isProduction ? 'An internal service error occurred.' : err.message,
       requestId,
       retryable,
+      ...(provider ? { provider } : {}),
+      ...(retryAfterSeconds ? { retryAfterSeconds } : {}),
       ...(isProduction || !err.details ? {} : { details: err.details }),
     },
   });
