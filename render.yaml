@@ -20,7 +20,7 @@ services:
       - key: OPENROUTER_MODEL
         value: google/gemma-3-27b-it:free
       - key: OPENROUTER_FREE_MODELS
-        value: google/gemma-3-27b-it:free
+        value: meta-llama/llama-3.3-8b-instruct:free,google/gemma-3-27b-it:free,mistralai/mistral-7b-instruct:free
       - key: ALLOW_PAID_AI_MODELS
         value: "false"
       - key: OPENROUTER_HTTP_REFERER
@@ -31,6 +31,16 @@ services:
         value: "60000"
       - key: PROVIDER_TIMEOUT_MS
         value: "45000"
+      - key: OPENROUTER_CATALOG_TTL_MS
+        value: "600000"
+      - key: OPENROUTER_MAX_MODEL_ATTEMPTS
+        value: "3"
+      - key: MAX_OUTPUT_TOKENS
+        value: "450"
+      - key: MAX_PROMPT_LENGTH
+        value: "12000"
+      - key: PROVIDER_CONCURRENCY
+        value: "1"
       - key: RATE_LIMIT_WINDOW_MS
         value: "900000"
       - key: RATE_LIMIT_MAX

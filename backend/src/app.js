@@ -26,6 +26,9 @@ export function createApp() {
       return callback(new Error('Origin is not allowed by CORS policy.'));
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'x-request-id'],
+    exposedHeaders: ['x-request-id', 'retry-after'],
   }));
   app.use((req, _res, next) => {
     const hasBody = req.headers['content-length'] || req.headers['transfer-encoding'];
@@ -46,7 +49,7 @@ export function createApp() {
 
   app.use('/api', api);
   app.use('/.netlify/functions/api', api);
-  app.use('/', api);
+  if (!env.isProduction) app.use('/', api);
   app.use(notFound);
   app.use(errorHandler);
   return app;

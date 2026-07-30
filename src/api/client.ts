@@ -48,7 +48,24 @@ export async function apiRequest<T>(path: string, options: RequestInit & { token
     const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers, signal });
     const responseRequestId = response.headers.get('x-request-id') || requestId;
     const retryAfterSeconds = Number(response.headers.get('retry-after') || '') || undefined;
-    const envelope = await response.json().catch(() => ({ data: null, error: { code: 'invalid_json', message: 'Server returned an invalid response.', requestId: responseRequestId, retryable: false } })) as ApiEnvelope<T>;
+    const contentType = response.headers.get('content-type') || '';
+    const rawBody = await response.text();
+    if (!rawBody.trim()) {
+      throw new ApiClientError(response.status || 502, { code: 'backend_deployment_invalid', message: `Backend returned an empty response with HTTP ${response.status}.`, requestId: responseRequestId, retryable: response.status >= 500 || response.status === 404 });
+    }
+    if (!contentType.toLowerCase().includes('application/json')) {
+      const looksHtml = /^\s*<!doctype html|^\s*<html/i.test(rawBody);
+      throw new ApiClientError(response.status || 502, { code: 'backend_deployment_invalid', message: looksHtml ? `Backend returned an HTML page instead of JSON with HTTP ${response.status}. Check the backend deployment and API base URL.` : `Backend returned non-JSON content with HTTP ${response.status}.`, requestId: responseRequestId, retryable: response.status >= 500 || response.status === 404 });
+    }
+    let envelope: ApiEnvelope<T>;
+    try {
+      envelope = JSON.parse(rawBody) as ApiEnvelope<T>;
+    } catch {
+      throw new ApiClientError(response.status || 502, { code: 'backend_deployment_invalid', message: `Backend returned malformed JSON with HTTP ${response.status}.`, requestId: responseRequestId, retryable: response.status >= 500 || response.status === 404 });
+    }
+    if (!envelope || typeof envelope !== 'object' || !('data' in envelope) || !('error' in envelope)) {
+      throw new ApiClientError(response.status || 502, { code: 'backend_deployment_invalid', message: `Backend returned an unexpected response schema with HTTP ${response.status}.`, requestId: responseRequestId, retryable: response.status >= 500 || response.status === 404 });
+    }
     if (envelope.error) {
       envelope.error.requestId ||= responseRequestId;
       envelope.error.retryAfterSeconds ||= retryAfterSeconds;

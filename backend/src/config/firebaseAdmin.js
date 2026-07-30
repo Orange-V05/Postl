@@ -7,6 +7,7 @@ const logger = createLogger('firebase-admin');
 
 let initialized = false;
 let unavailableReason = '';
+let projectId = '';
 
 function parseServiceAccount() {
   const inlineJson = env.FIREBASE_SERVICE_ACCOUNT_JSON || env.FIREBASE_SERVICE_ACCOUNT_KEY;
@@ -39,29 +40,29 @@ export function initializeFirebaseAdmin() {
   try {
     const serviceAccount = parseServiceAccount();
     if (!serviceAccount?.project_id || !serviceAccount?.private_key || !serviceAccount?.client_email) {
-      unavailableReason = 'Firebase service account is not configured.';
-      if (env.isProduction) throw new Error(unavailableReason);
-      logger.warn(unavailableReason);
+      unavailableReason = 'firebase_admin_not_configured';
+      logger.warn('Firebase service account is not configured. Protected production routes will fail closed.');
       return getFirebaseAdminState();
     }
 
     serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
     admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
     initialized = true;
+    projectId = serviceAccount.project_id;
     unavailableReason = '';
     logger.info('Firebase Admin initialized', { projectId: serviceAccount.project_id });
   } catch (err) {
     initialized = false;
-    unavailableReason = err.message || 'Firebase Admin initialization failed.';
-    if (env.isProduction) throw err;
-    logger.warn('Firebase Admin unavailable in development', { reason: unavailableReason });
+    projectId = '';
+    unavailableReason = err.message || 'firebase_admin_initialization_failed';
+    logger.warn('Firebase Admin unavailable; protected routes will fail closed.', { reason: unavailableReason });
   }
 
   return getFirebaseAdminState();
 }
 
 export function getFirebaseAdminState() {
-  return { initialized, unavailableReason };
+  return { initialized, unavailableReason, projectId };
 }
 
 export function getFirebaseAdmin() {

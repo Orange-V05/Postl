@@ -11,10 +11,8 @@ const openRouterConfiguredFreeModels = (env.OPENROUTER_FREE_MODELS || '')
   .filter(Boolean);
 
 const openRouterModelCandidates = env.ALLOW_PAID_AI_MODELS
-  ? [env.OPENROUTER_MODEL].filter(Boolean)
-  : (openRouterConfiguredFreeModels.length > 0
-    ? openRouterConfiguredFreeModels
-    : [env.OPENROUTER_MODEL].filter((model) => model && model.endsWith(':free')));
+  ? []
+  : openRouterConfiguredFreeModels;
 
 const defaults = [
   {

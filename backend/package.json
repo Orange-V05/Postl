@@ -13,6 +13,8 @@
     "start:legacy-local-ai": "python LocalAIServer/server.py",
     "check": "node scripts/check-js-syntax.js",
     "config:check": "node scripts/config-check.js",
+    "verify:openrouter-free-models": "node scripts/verify-openrouter-free-models.mjs",
+    "test": "node --test scripts/*.test.mjs",
     "smoke:import": "node -e \"import('./src/app.js').then(() => console.log('app import ok'))\"",
     "build": "npm run check && npm run config:check && npm run smoke:import"
   },
