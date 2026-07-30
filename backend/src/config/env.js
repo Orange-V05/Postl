@@ -24,7 +24,7 @@ const schema = Joi.object({
   FIREBASE_CLIENT_EMAIL: Joi.string().allow('').default(''),
   FIREBASE_PRIVATE_KEY: Joi.string().allow('').default(''),
   AI_PRIMARY_PROVIDER: Joi.string().valid('ollama', 'openrouter', 'huggingface').allow('').default(''),
-  AI_FALLBACK_PROVIDERS: Joi.string().allow('').default('openrouter,huggingface'),
+  AI_FALLBACK_PROVIDERS: Joi.string().allow('').default(''),
   OLLAMA_URL: Joi.string().uri({ scheme: ['http', 'https'] }).default('http://localhost:11434'),
   OLLAMA_MODEL: Joi.string().default('gemma-4:e2b'),
   OPENROUTER_API_KEY: Joi.string().allow('').default(''),
@@ -37,7 +37,11 @@ const schema = Joi.object({
   USER_DAILY_GENERATION_LIMIT: Joi.number().integer().min(0).default(25),
   USER_DAILY_REPURPOSE_LIMIT: Joi.number().integer().min(0).default(10),
   OPENROUTER_HTTP_REFERER: Joi.string().uri({ scheme: ['http', 'https'] }).allow('').default('https://postl.vercel.app'),
-  OPENROUTER_APP_TITLE: Joi.string().trim().max(100).default('POSTL Content Intelligence'),
+  OPENROUTER_APP_TITLE: Joi.string().trim().max(100).default('POSTL'),
+  OPENROUTER_CATALOG_TTL_MS: Joi.number().integer().min(0).default(10 * 60 * 1000),
+  OPENROUTER_MAX_MODEL_ATTEMPTS: Joi.number().integer().min(1).max(5).default(3),
+  MAX_OUTPUT_TOKENS: Joi.number().integer().min(16).max(1000).default(450),
+  MAX_PROMPT_LENGTH: Joi.number().integer().min(100).default(12000),
   CACHE_TTL_MS: Joi.number().integer().min(0).default(60 * 60 * 1000),
   CACHE_MAX_ITEMS: Joi.number().integer().min(0).default(200),
   PROVIDER_TIMEOUT_MS: Joi.number().integer().min(1000).default(45000),
@@ -59,6 +63,9 @@ if (value.NODE_ENV === 'production' && origins.length === 0) {
 
 const fallbackProviders = value.AI_FALLBACK_PROVIDERS.split(',').map((p) => p.trim()).filter(Boolean);
 const aiPrimaryProvider = value.AI_PRIMARY_PROVIDER || (value.NODE_ENV === 'production' ? 'openrouter' : 'ollama');
+if (value.NODE_ENV === 'production' && value.ALLOW_PAID_AI_MODELS) {
+  throw new Error('ALLOW_PAID_AI_MODELS must remain false in production.');
+}
 
 export const env = Object.freeze({
   ...value,

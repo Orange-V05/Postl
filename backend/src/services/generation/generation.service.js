@@ -46,7 +46,10 @@ async function generateVariant({ request, user, requestId, strategy, providerNam
       : (provider.metadata.models[0]?.providerModels?.length ? provider.metadata.models[0].providerModels : [provider.metadata.models[0]?.providerModel || provider.model]);
     const prompt = buildGenerationPrompt(request, strategy);
 
+    let attempted = 0;
     for (const modelForProvider of modelCandidates.filter(Boolean)) {
+      if (provider.name === 'openrouter' && attempted >= env.OPENROUTER_MAX_MODEL_ATTEMPTS) break;
+      attempted += 1;
       const key = makeCacheKey({ userId: user?.uid || 'anonymous', request: { ...request, strategy: strategy.id }, provider: provider.name, model: modelForProvider, promptVersion: PROMPT_TEMPLATE_VERSION });
       const cached = cacheGet(key);
       if (cached) return { ...cached, cached: true };
@@ -78,5 +81,9 @@ async function generateVariant({ request, user, requestId, strategy, providerNam
     }
   }
 
-  throw new ApiError(lastError?.code || 'generation_failed', lastError?.message || 'All configured AI providers failed.', 502, true, { provider: lastError?.provider, status: lastError?.status });
+  const code = providerNames.includes('openrouter') ? 'free_models_temporarily_unavailable' : (lastError?.code || 'generation_failed');
+  const message = providerNames.includes('openrouter')
+    ? 'The free AI service is temporarily unavailable. Please try again later.'
+    : (lastError?.message || 'All configured AI providers failed.');
+  throw new ApiError(code, message, 503, true, { provider: lastError?.provider, status: lastError?.status });
 }
