@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { validateFirebaseClientConfig } from './firebaseConfig';
 
 const completeEnv = {
-  VITE_FIREBASE_API_KEY: 'firebase-browser-key-for-tests-only',
+  VITE_FIREBASE_API_KEY: 'test-browser-key-12345678901234567890',
   VITE_FIREBASE_AUTH_DOMAIN: 'postl-0.firebaseapp.com',
   VITE_FIREBASE_PROJECT_ID: 'postl-0',
   VITE_FIREBASE_STORAGE_BUCKET: 'postl-0.firebasestorage.app',
@@ -62,10 +62,36 @@ describe('validateFirebaseClientConfig', () => {
     }, false);
     expect(result.ready).toBe(false);
     expect(result.invalid).toEqual(expect.arrayContaining([
-      'VITE_FIREBASE_AUTH_DOMAIN',
       'VITE_FIREBASE_PROJECT_ID',
       'VITE_FIREBASE_MESSAGING_SENDER_ID',
       'VITE_FIREBASE_APP_ID',
     ]));
+  });
+
+  it('rejects quoted and placeholder values copied into hosting dashboards', () => {
+    const result = validateFirebaseClientConfig({
+      ...completeEnv,
+      VITE_FIREBASE_API_KEY: 'your_api_key',
+      VITE_FIREBASE_APP_ID: '`1:123456789012:web:abcdef123456`',
+    }, false);
+    expect(result.ready).toBe(false);
+    expect(result.invalid).toEqual(expect.arrayContaining(['VITE_FIREBASE_API_KEY', 'VITE_FIREBASE_APP_ID']));
+  });
+
+  it('rejects a standard firebaseapp.com auth domain from a different project', () => {
+    const result = validateFirebaseClientConfig({
+      ...completeEnv,
+      VITE_FIREBASE_AUTH_DOMAIN: 'other-project.firebaseapp.com',
+    }, false);
+    expect(result.ready).toBe(false);
+    expect(result.invalid).toContain('VITE_FIREBASE_AUTH_DOMAIN');
+  });
+
+  it('allows a complete custom auth domain when other identifiers are coherent', () => {
+    const result = validateFirebaseClientConfig({
+      ...completeEnv,
+      VITE_FIREBASE_AUTH_DOMAIN: 'auth.postl.example.com',
+    }, false);
+    expect(result.ready).toBe(true);
   });
 });

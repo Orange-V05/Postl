@@ -86,3 +86,20 @@ Vercel Firebase setup:
 - Restrict the Firebase browser API key in Google Cloud by HTTP referrer and by required Firebase/Identity Toolkit APIs. Review usage for abuse.
 
 Current limitation: this repository update cannot set Vercel, Firebase Console, Google Cloud, or Render dashboard values because no authenticated credentials are available in this environment.
+
+## Authentication troubleshooting
+
+If production login shows a credential error for accounts that exist in Firebase, inspect the real Firebase Auth error code before assuming the password is wrong. POSTL maps credential failures neutrally but preserves safe error categories in development logs.
+
+Checklist:
+
+- Confirm Vercel Production variables all belong to the same Firebase project: `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_APP_ID`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, and `VITE_FIREBASE_API_KEY`.
+- Confirm Production, not only Preview or Development, contains the variables and that values have no surrounding quotes, backticks, copied variable names, trailing spaces, or newlines.
+- Redeploy after every Vercel env change because Vite embeds `VITE_*` values at build time. Verify the asset hash changes.
+- In Firebase Console for the deployed project, enable Authentication and the Email/Password provider. Email link only is not the same as Email/Password.
+- Ensure the user exists in Authentication Users for that same project, is not disabled, and has the password provider. A Firestore profile document alone is not an auth user.
+- Add `postl.vercel.app` to Authentication authorized domains exactly without protocol or path.
+- Restrict the browser API key to intended HTTP referrers such as `https://postl.vercel.app/*` and required Firebase/Auth APIs, including Identity Toolkit where applicable. Do not remove all restrictions as a shortcut.
+- Inspect the Identity Toolkit network response for safe fields: endpoint, HTTP status, and Firebase error code. Do not copy passwords, API keys, ID tokens, or refresh tokens into logs.
+- Check App Check, Identity Platform tenants, blocking functions, password policy, and quota only after the basic project/provider/domain/key checks pass.
+- Missing Firestore profiles after successful login must be handled as profile initialization, not reported as invalid credentials.

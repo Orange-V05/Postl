@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FaLock, FaEnvelope, FaRocket, FaArrowRight, FaHome, FaEye, FaEyeSlash, FaCheck, FaTimes } from 'react-icons/fa';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { logAuthFailure, translateFirebaseAuthError } from '../utils/authErrors';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, firebaseConfigError } from '../firebase';
 
@@ -42,13 +43,17 @@ const SignupPage: React.FC = () => {
 
     try {
       if (!auth) throw new Error(firebaseConfigError || 'Firebase authentication is not configured.');
-      await createUserWithEmailAndPassword(auth, email, password);
+      await createUserWithEmailAndPassword(auth, email.trim(), password);
       navigate('/dashboard');
     } catch (error: any) {
       const code = error?.code;
       if (code === 'auth/email-already-in-use') setError('This email is already registered. Try logging in.');
       else if (code === 'auth/weak-password') setError('Password is too weak. Use at least 6 characters.');
-      else setError(error.message || 'Failed to create account.');
+      else {
+        const translated = translateFirebaseAuthError(error);
+        logAuthFailure('signup', translated);
+        setError(translated.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -102,6 +107,8 @@ const SignupPage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
+              id="signup-error"
+              role="alert"
               aria-live="assertive"
               className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-medium text-center"
             >
@@ -119,6 +126,7 @@ const SignupPage: React.FC = () => {
                   placeholder="creator@postl.ai"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                  aria-describedby={error ? 'signup-error' : undefined}
                   aria-required="true"
                   className={`w-full bg-[var(--input-bg)] border rounded-2xl py-4 pl-14 pr-5 text-[var(--text-color)] placeholder:text-[var(--muted-color)]/50 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium ${
                     email && !isValidEmail(email) ? 'border-red-500/50 focus:border-red-500/50' : 'border-[var(--input-border)] focus:border-emerald-500/50'
@@ -137,6 +145,7 @@ const SignupPage: React.FC = () => {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                  aria-describedby={error ? 'signup-error' : undefined}
                   aria-required="true"
                   className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-2xl py-4 pl-14 pr-14 text-[var(--text-color)] placeholder:text-[var(--muted-color)]/50 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium"
                   required

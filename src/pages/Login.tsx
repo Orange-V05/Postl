@@ -3,6 +3,7 @@ import { FaUser, FaLock, FaRocket, FaArrowRight, FaHome, FaEye, FaEyeSlash } fro
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { logAuthFailure, translateFirebaseAuthError } from '../utils/authErrors';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -29,14 +30,12 @@ const LoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      await auth.login(email, password);
+      await auth.login(email.trim(), password);
       navigate('/dashboard');
     } catch (error: any) {
-      const code = error?.code;
-      if (code === 'auth/user-not-found') setError('No account found with this email.');
-      else if (code === 'auth/wrong-password') setError('Incorrect password. Please try again.');
-      else if (code === 'auth/too-many-requests') setError('Too many failed attempts. Please wait and try again.');
-      else setError('Invalid credentials. Please try again.');
+      const translated = translateFirebaseAuthError(error);
+      logAuthFailure('login', translated);
+      setError(translated.message);
     } finally {
       setLoading(false);
     }
@@ -90,6 +89,8 @@ const LoginPage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
+              id="login-error"
+              role="alert"
               aria-live="assertive"
               className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-medium text-center"
             >
@@ -107,6 +108,7 @@ const LoginPage: React.FC = () => {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                  aria-describedby={error ? 'login-error' : undefined}
                   aria-required="true"
                   className={`w-full bg-[var(--input-bg)] border text-[var(--text-color)] placeholder:text-[var(--muted-color)]/50 rounded-2xl py-4 pl-14 pr-5 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium ${
                     email && !isValidEmail(email) ? 'border-red-500/50 focus:border-red-500/50' : 'border-[var(--input-border)] focus:border-emerald-500/50'
@@ -128,6 +130,7 @@ const LoginPage: React.FC = () => {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                  aria-describedby={error ? 'login-error' : undefined}
                   aria-required="true"
                   className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-color)] placeholder:text-[var(--muted-color)]/50 rounded-2xl py-4 pl-14 pr-14 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium"
                   required
