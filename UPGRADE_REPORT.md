@@ -836,3 +836,38 @@ Implemented activation fixes:
 - Updated deployment documentation with the exact Render, OpenRouter, Firebase Admin, and Vercel `VITE_API_BASE_URL` activation checklist.
 
 Production status after code changes: repository is deployment-ready for a persistent Render backend, but actual Render deployment, OpenRouter key configuration, Firebase Admin secret configuration, Vercel `VITE_API_BASE_URL`, and live production generation require external dashboard credentials and must be verified after those settings are applied.
+
+
+## Deployment-routing incident: live Render stale backend
+
+Date: 2026-07-30
+Verified repository commit: `a42ffa84715e46effcf3d54959c32ee49a0c28bb`
+
+### Local route contract verified
+
+The current backend starts from `backend/src/server.js`, binds to `process.env.PORT` on `0.0.0.0`, and mounts API routes at exactly one `/api` prefix in production. Local production smoke testing on port 4107 verified:
+
+- `GET /api/health`: HTTP 200, `application/json`, envelope with `data` and `error` fields.
+- `GET /api/ready`: HTTP 503 without external secrets, `application/json`, structured `service_not_ready` envelope.
+- `GET /api/models`: HTTP 200, `application/json`, envelope with model catalog data.
+- `POST /api/generate-post`: HTTP 503 without Firebase Admin, `application/json`, structured `auth_service_unavailable` envelope.
+- Unknown `/api/*`: HTTP 404, `application/json`, structured `not_found` envelope with request ID.
+- Non-prefixed `/health`, `/ready`, and `/models`: HTTP 404 JSON in production by design.
+
+### Live Render evidence
+
+`https://postl.onrender.com` is not serving the current backend commit. Safe live probes showed:
+
+- `GET /health`: HTTP 200 JSON body shape `status,version,engine`, version `4.0`.
+- `GET /api/health`: HTTP 200 JSON body shape `status,version,engine`, version `4.0`.
+- `GET /api/models`: HTTP 404 `text/html` Express error page.
+- `GET /api/ready`: HTTP 404 `text/html` Express error page.
+- `POST /api/generate-post`: HTTP 401 JSON body shape `error` with legacy text `Unauthorized: No token provided`.
+
+These responses do not match current commit `a42ffa8`, which returns JSON envelopes and includes `/api/models` and `/api/ready`. The production HTML 404 is therefore a stale or wrong Render backend deployment, not a current frontend parser bug or provider-architecture issue.
+
+### Required deployment action
+
+Redeploy or recreate the Render backend as a **Web Service** from the latest `origin/main`, root directory `backend`, build command `npm ci && npm run build`, start command `npm run start:prod`, health check path `/api/health`, and public URL used by Vercel as `https://postl.onrender.com` or the new backend service origin. Do not use a Static Site for the backend. Do not deploy the repository root frontend as the backend service. After redeploy, `/api/health` must return the current JSON envelope, `/api/models` must return `balanced-cloud`, and `/api/ready` must report Firebase/OpenRouter readiness.
+
+Render CLI was not installed/authenticated and Vercel CLI was not authenticated in this environment, so the dashboard deployment could not be performed here.
