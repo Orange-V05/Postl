@@ -719,3 +719,45 @@ Starting commit: `e04fe2525373088423f5ba1a6e6a0b84b9e0f808`
 - No Vercel, Firebase Console, Google Cloud Console, Render, OpenRouter, or Hugging Face credentials are available in this environment, so dashboard configuration and real production auth/generation cannot be completed or claimed.
 - Local backend Firebase Admin is still unavailable because the ignored local `backend/service-account.json` is malformed.
 - Brand Voice, Campaigns, post persistence, editor, repurposing UI, Firestore emulator tests, E2E tests, dependency audit remediation, accessibility tests, and full production workflow verification remain incomplete from the larger modernization scope.
+
+## 9. Production Login Invalid Credentials Incident
+
+Date: 2026-07-30
+Starting commit: `109515c76133fa69ea96a7a5268154c62673a5be`
+
+### Observed production symptom
+
+The user reported that `postl.vercel.app` login attempts return a generic invalid-credentials message even for an account manually created in Firebase Authentication. This must not be treated as proof of a wrong password because frontend code was hiding many Firebase Auth failure modes behind one generic message.
+
+### Verified repository and deployment state
+
+- Local `HEAD`, `origin/main`, and `git ls-remote origin refs/heads/main` all resolved to `109515c76133fa69ea96a7a5268154c62673a5be` before code changes.
+- Live production served `https://postl.vercel.app` with asset `/assets/index-C7ORSLO9.js` from the previous production build.
+- Automated bundle inspection could not capture the user's login attempt or Identity Toolkit response because no controlled production test credentials or browser-authenticated session are available in this environment.
+- Vercel, Firebase, and Render CLIs remain unauthenticated here, so external environment variables, Firebase Auth settings, API-key restrictions, and backend deployment cannot be inspected or changed from this session.
+
+### Code-level root cause found
+
+`src/pages/Login.tsx` mapped only a few Firebase Auth codes and converted all other failures to `Invalid credentials. Please try again.` This hid deployment and provider errors such as `auth/invalid-api-key`, `auth/api-key-not-valid`, `auth/operation-not-allowed`, `auth/unauthorized-domain`, `auth/app-not-authorized`, `auth/project-not-found`, and `auth/configuration-not-found`.
+
+### Fixes implemented
+
+- Added `src/utils/authErrors.ts` with centralized Firebase Auth error translation.
+- Login now trims email only, preserves password exactly, and uses the translator.
+- Signup now uses the same translator for configuration/network/unexpected failures while preserving email-already-in-use and weak-password messages.
+- Development logging records only Firebase error code, category, and diagnostic ID, never email, passwords, tokens, API keys, or raw responses.
+- Login and signup error regions now use `role="alert"` and `aria-describedby` associations.
+- Firebase config validation now detects quoted dashboard values, placeholders, short API-key-like values, and mismatched standard `PROJECT_ID.firebaseapp.com` auth domains while allowing legitimate custom auth domains.
+- Added tests for auth error mapping and Firebase config consistency edge cases.
+- Updated deployment documentation with an Authentication Troubleshooting section.
+
+### Remaining external checks required
+
+- Capture the actual Identity Toolkit HTTP status and Firebase error code from the failing production login in a clean browser.
+- Confirm Vercel Production variables are in the correct scope, unquoted, newly deployed, and all belong to the same Firebase project as the manually created user.
+- Confirm Email/Password sign-in is enabled in the exact deployed Firebase project.
+- Confirm the manually created user has the password provider and is not disabled.
+- Confirm `postl.vercel.app` is an authorized Firebase Auth domain.
+- Confirm Google Cloud API-key restrictions allow `https://postl.vercel.app/*` and the required Firebase/Auth APIs, including Identity Toolkit where applicable.
+- Confirm App Check, Identity Platform tenant settings, blocking functions, and quota are not rejecting sign-ins.
+- Verify successful production login with a controlled test account before claiming the incident resolved.
