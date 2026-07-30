@@ -139,7 +139,16 @@ export async function getOpenRouterFreeModelVerification(options = {}) {
     else if (observations.some((item) => item.present && !item.zeroPriced)) code = 'configured_models_not_free';
     else code = 'configured_models_not_found';
   }
-  logger.info('OpenRouter catalog verified', { code, catalog: catalog.metadata, configuredModels: observations });
+  const zeroPricedModels = [...catalog.byId.values()]
+    .filter(hasZeroPromptAndCompletionPricing)
+    .map((model) => ({
+      id: model.id,
+      promptPrice: model.pricing.prompt,
+      completionPrice: model.pricing.completion,
+      promptPriceType: typeof model.pricing.prompt,
+      completionPriceType: typeof model.pricing.completion,
+    }));
+  logger.info('OpenRouter catalog verified', { code, catalog: catalog.metadata, configuredModels: observations, zeroPricedModels });
   return { verified, code, observations, catalog: catalog.metadata };
 }
 
