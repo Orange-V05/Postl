@@ -103,3 +103,26 @@ Checklist:
 - Inspect the Identity Toolkit network response for safe fields: endpoint, HTTP status, and Firebase error code. Do not copy passwords, API keys, ID tokens, or refresh tokens into logs.
 - Check App Check, Identity Platform tenants, blocking functions, password policy, and quota only after the basic project/provider/domain/key checks pass.
 - Missing Firestore profiles after successful login must be handled as profile initialization, not reported as invalid credentials.
+
+### Disposable Firebase Auth REST verification
+
+Use this repository-only diagnostic when production login reports credential failures and you need to verify the Firebase project independently of React UI:
+
+```text
+npm run config:firebase
+npm run config:firebase:rest
+```
+
+The first command prints only safe configuration metadata: project ID, auth domain, sender ID suffix, app ID suffix, API key suffix, missing variables, and consistency errors. It never prints the full API key.
+
+The REST command creates a disposable random Email/Password user through Identity Toolkit, signs in with the same disposable credentials, then deletes the account. It prints only step, HTTP status, safe Firebase error code, and classification. It never prints the disposable email, password, ID token, refresh token, or API key.
+
+Interpretation:
+
+- `signup status=400 code=OPERATION_NOT_ALLOWED`: Email/Password provider is disabled in Firebase Authentication for the configured project.
+- `API_KEY_INVALID`, `API_KEY_SERVICE_BLOCKED`, `PROJECT_NOT_FOUND`, or `CONFIGURATION_NOT_FOUND`: the API key or Firebase Web App configuration is wrong or restricted incorrectly.
+- `REQUEST_BLOCKED`, `PERMISSION_DENIED`, or referrer-related errors: inspect Google Cloud API-key HTTP referrer restrictions, App Check, and required Firebase/Auth APIs.
+- `signin code=INVALID_LOGIN_CREDENTIALS` immediately after a successful disposable signup: investigate tenants, blocking functions, password policy, or unusual Identity Platform behavior.
+- all steps `status=200 code=OK`: Firebase Email/Password is operational for that configuration. If production UI login still fails, inspect Vercel's deployed values, browser network response, form behavior, user account state, or post-login Firestore/profile initialization.
+
+On 2026-07-30, local config for project `postl-0` returned `200 OK` for disposable signup, signin, and delete. This proves the local Firebase browser config and Email/Password provider are functional. It does not prove the Vercel Production build contains the same values; Vercel dashboard scope and redeployment still need verification.

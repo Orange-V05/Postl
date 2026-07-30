@@ -761,3 +761,18 @@ The user reported that `postl.vercel.app` login attempts return a generic invali
 - Confirm Google Cloud API-key restrictions allow `https://postl.vercel.app/*` and the required Firebase/Auth APIs, including Identity Toolkit where applicable.
 - Confirm App Check, Identity Platform tenant settings, blocking functions, and quota are not rejecting sign-ins.
 - Verify successful production login with a controlled test account before claiming the incident resolved.
+
+### Additional verification on 2026-07-30
+
+A disposable Identity Toolkit REST verification was run against the local Firebase browser config, redacting all credentials and deleting the disposable account. Safe result:
+
+- Deployed/local safe project under test: `postl-0`
+- `accounts:signUp`: HTTP `200`, code `OK`
+- `accounts:signInWithPassword`: HTTP `200`, code `OK`
+- `accounts:delete`: HTTP `200`, code `OK`
+
+Interpretation: the local `.env.local` Firebase browser configuration points to a Firebase project where Email/Password Authentication is enabled and functional, and the API key permits Identity Toolkit for the local test context. Therefore, if production login still fails, the most likely remaining causes are Vercel Production values not matching this local config, stale Vercel deployment, the manually created account being in a different project or lacking the password provider, browser/network restrictions, or post-login Firestore/profile initialization being confused with authentication.
+
+Live bundle comparison attempted to locate local safe identifiers in Vercel chunks. The inspected production chunks did not expose the local `projectId`, `authDomain`, sender ID, app ID suffix, or API key suffix as plain strings. Because Vite/minification can obscure these strings, this is not conclusive proof of a wrong Vercel config, but it means the Vercel dashboard Production values still must be inspected directly.
+
+A safe script was added: `scripts/verify-firebase-auth-config.mjs`, exposed through `npm run config:firebase` and `npm run config:firebase:rest`. It provides repeatable non-browser verification without printing API keys, passwords, tokens, or disposable account details.
