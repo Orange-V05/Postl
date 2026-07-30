@@ -37,6 +37,10 @@ export function errorHandler(err, req, res, _next) {
     retryable,
     stack: isProduction ? undefined : err.stack,
     details: isProduction ? undefined : err.details,
+    firebaseOperation: err.details?.firebaseOperation,
+    firebaseCode: err.details?.firebaseCode,
+    collection: err.details?.collection,
+    docIdHash: err.details?.docIdHash,
   });
 
   res.status(status).json({
