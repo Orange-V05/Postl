@@ -7,8 +7,8 @@ let server;
 
 export function startServer() {
   if (server) return server;
-  server = app.listen(env.PORT, () => {
-    logger.info('POSTL backend listening', { port: env.PORT });
+  server = app.listen(env.PORT, '0.0.0.0', () => {
+    logger.info('POSTL backend listening', { port: env.PORT, host: '0.0.0.0' });
   });
   return server;
 }

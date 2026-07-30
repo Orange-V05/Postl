@@ -1,6 +1,7 @@
 import { ApiError } from '../middleware/errorHandler.js';
 import { validateGenerationRequest } from '../validation/generation.schema.js';
 import { generateContent } from '../services/generation/generation.service.js';
+import { assertUserQuota } from '../services/quota/quota.service.js';
 
 export async function generatePost(req, res, next) {
   const { error, value } = validateGenerationRequest(req.body);
@@ -9,6 +10,7 @@ export async function generatePost(req, res, next) {
   }
 
   try {
+    await assertUserQuota({ uid: req.user?.uid, kind: 'generation', requestId: req.requestId });
     const data = await generateContent({ request: value, user: req.user, requestId: req.requestId });
     return res.json({ data, error: null });
   } catch (err) {

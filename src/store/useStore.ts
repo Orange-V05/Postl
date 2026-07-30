@@ -29,12 +29,19 @@ interface AppState {
 }
 
 const defaultPrefs: UserPreferences = {
-  selectedModel: 'local-gemma',
+  selectedModel: 'balanced-cloud',
   creativity: 0.7,
   tone: 'professional',
   fontSize: 28,
   darkMode: true,
 };
+
+const obsoleteModelIds = new Set(['local-gemma', 'cloud-openrouter', 'google/gemma-3-27b-it:free', 'gemma4:e2b', 'gemma-4:e2b']);
+
+export function normalizeModelPreference(modelId: string | undefined) {
+  if (!modelId || obsoleteModelIds.has(modelId)) return defaultPrefs.selectedModel;
+  return modelId;
+}
 
 const defaultUsageStats: UsageStats = {
   totalGenerations: 0,
@@ -81,6 +88,18 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'postl-v4-store',
+      version: 5,
+      migrate: (persisted: any) => {
+        const state = persisted || {};
+        return {
+          ...state,
+          prefs: {
+            ...defaultPrefs,
+            ...(state.prefs || {}),
+            selectedModel: normalizeModelPreference(state.prefs?.selectedModel),
+          },
+        };
+      },
     }
   )
 );

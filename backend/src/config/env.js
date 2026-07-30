@@ -18,15 +18,26 @@ const schema = Joi.object({
   PORT: Joi.number().port().default(4000),
   ALLOWED_ORIGINS: Joi.string().allow('').default('http://localhost:3005,http://127.0.0.1:3005'),
   FIREBASE_SERVICE_ACCOUNT_KEY: Joi.string().allow('').default(''),
+  FIREBASE_SERVICE_ACCOUNT_JSON: Joi.string().allow('').default(''),
   FIREBASE_SERVICE_ACCOUNT_PATH: Joi.string().allow('').default(path.join(backendRoot, 'service-account.json')),
-  AI_PRIMARY_PROVIDER: Joi.string().valid('ollama', 'openrouter', 'huggingface').default('ollama'),
+  FIREBASE_PROJECT_ID: Joi.string().allow('').default(''),
+  FIREBASE_CLIENT_EMAIL: Joi.string().allow('').default(''),
+  FIREBASE_PRIVATE_KEY: Joi.string().allow('').default(''),
+  AI_PRIMARY_PROVIDER: Joi.string().valid('ollama', 'openrouter', 'huggingface').allow('').default(''),
   AI_FALLBACK_PROVIDERS: Joi.string().allow('').default('openrouter,huggingface'),
   OLLAMA_URL: Joi.string().uri({ scheme: ['http', 'https'] }).default('http://localhost:11434'),
   OLLAMA_MODEL: Joi.string().default('gemma-4:e2b'),
   OPENROUTER_API_KEY: Joi.string().allow('').default(''),
   OPENROUTER_MODEL: Joi.string().default('google/gemma-3-27b-it:free'),
+  OPENROUTER_FREE_MODELS: Joi.string().allow('').default(''),
+  ALLOW_PAID_AI_MODELS: Joi.boolean().truthy('true').falsy('false').default(false),
   HF_TOKEN: Joi.string().allow('').default(''),
   HF_MODEL: Joi.string().default('google/gemma-2b-it'),
+  AI_MODELS: Joi.string().allow('').default(''),
+  USER_DAILY_GENERATION_LIMIT: Joi.number().integer().min(0).default(25),
+  USER_DAILY_REPURPOSE_LIMIT: Joi.number().integer().min(0).default(10),
+  OPENROUTER_HTTP_REFERER: Joi.string().uri({ scheme: ['http', 'https'] }).allow('').default('https://postl.vercel.app'),
+  OPENROUTER_APP_TITLE: Joi.string().trim().max(100).default('POSTL Content Intelligence'),
   CACHE_TTL_MS: Joi.number().integer().min(0).default(60 * 60 * 1000),
   CACHE_MAX_ITEMS: Joi.number().integer().min(0).default(200),
   PROVIDER_TIMEOUT_MS: Joi.number().integer().min(1000).default(45000),
@@ -47,9 +58,11 @@ if (value.NODE_ENV === 'production' && origins.length === 0) {
 }
 
 const fallbackProviders = value.AI_FALLBACK_PROVIDERS.split(',').map((p) => p.trim()).filter(Boolean);
+const aiPrimaryProvider = value.AI_PRIMARY_PROVIDER || (value.NODE_ENV === 'production' ? 'openrouter' : 'ollama');
 
 export const env = Object.freeze({
   ...value,
+  AI_PRIMARY_PROVIDER: aiPrimaryProvider,
   backendRoot,
   repoRoot,
   allowedOrigins: origins,

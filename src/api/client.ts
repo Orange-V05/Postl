@@ -2,7 +2,7 @@ import { validateApiBaseUrl } from '../config/apiConfig';
 
 export interface ApiEnvelope<T> {
   data: T | null;
-  error: null | { code: string; message: string; requestId?: string; retryable?: boolean; details?: unknown };
+  error: null | { code: string; message: string; requestId?: string; retryable?: boolean; details?: unknown; provider?: string; retryAfterSeconds?: number };
 }
 
 export class ApiClientError extends Error {
@@ -11,6 +11,8 @@ export class ApiClientError extends Error {
   retryable: boolean;
   status: number;
   details?: unknown;
+  provider?: string;
+  retryAfterSeconds?: number;
 
   constructor(status: number, error: NonNullable<ApiEnvelope<unknown>['error']>) {
     super(error.message);
@@ -20,6 +22,8 @@ export class ApiClientError extends Error {
     this.requestId = error.requestId;
     this.retryable = Boolean(error.retryable);
     this.details = error.details;
+    this.provider = error.provider;
+    this.retryAfterSeconds = error.retryAfterSeconds;
   }
 }
 
@@ -42,13 +46,21 @@ export async function apiRequest<T>(path: string, options: RequestInit & { token
 
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers, signal });
-    const envelope = await response.json().catch(() => ({ data: null, error: { code: 'invalid_json', message: 'Server returned an invalid response.', requestId, retryable: false } })) as ApiEnvelope<T>;
+    const responseRequestId = response.headers.get('x-request-id') || requestId;
+    const retryAfterSeconds = Number(response.headers.get('retry-after') || '') || undefined;
+    const envelope = await response.json().catch(() => ({ data: null, error: { code: 'invalid_json', message: 'Server returned an invalid response.', requestId: responseRequestId, retryable: false } })) as ApiEnvelope<T>;
+    if (envelope.error) {
+      envelope.error.requestId ||= responseRequestId;
+      envelope.error.retryAfterSeconds ||= retryAfterSeconds;
+    }
     if (!response.ok || envelope.error) {
-      throw new ApiClientError(response.status, envelope.error || { code: 'http_error', message: `Request failed with ${response.status}`, requestId, retryable: response.status >= 500 });
+      throw new ApiClientError(response.status, envelope.error || { code: 'http_error', message: `Request failed with ${response.status}`, requestId: responseRequestId, retryable: response.status >= 500, retryAfterSeconds });
     }
     return envelope.data as T;
   } catch (err: any) {
+    if (err instanceof ApiClientError) throw err;
     if (err.name === 'AbortError') throw new ApiClientError(408, { code: 'request_timeout', message: 'The request timed out.', requestId, retryable: true });
+    if (err instanceof TypeError) throw new ApiClientError(0, { code: 'network_unavailable', message: 'POSTL could not reach the backend API.', requestId, retryable: true });
     throw err;
   } finally {
     window.clearTimeout(timeout);
@@ -80,5 +92,5 @@ export function generatePost(token: string | null, body: Record<string, unknown>
 }
 
 export function getModels() {
-  return apiRequest<{ models: Array<{ id: string; label: string; capabilities: string[]; local: boolean }>; platforms: Record<string, { label: string; formats: string[]; maxChars: number }>; objectives: string[]; tones: string[] }>('/models');
+  return apiRequest<{ models: Array<{ id: string; label: string; capabilities: string[]; local: boolean; privacy?: string; provider?: string }>; platforms: Record<string, { label: string; formats: string[]; maxChars: number }>; objectives: string[]; tones: string[] }>('/models');
 }

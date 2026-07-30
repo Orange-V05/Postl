@@ -80,7 +80,7 @@ const getPromptReadiness = (prompt: string) => {
 };
 
 const fallbackPrefs = {
-  selectedModel: 'google/gemma-3-27b-it:free',
+  selectedModel: 'balanced-cloud',
   creativity: 0.7,
   tone: 'professional' as const,
   fontSize: 28,
@@ -203,10 +203,13 @@ const GeneratePost: React.FC = () => {
       addDoc(collection(firestore, 'posts'), postData).catch(err => console.error("Firestore save failed:", err));
 
     } catch (error: any) {
-      console.error("[Connectivity Error] Full Detail:", error);
-      const errorMsg = error instanceof ApiClientError ? `${error.message} (${error.code})` : error.message;
-      const diagnostic = error instanceof ApiClientError ? ` Request ID: ${error.requestId || 'n/a'}` : ' (Server Unreachable - Is Backend Running?)';
-      setResult(`AI Engine Error: ${errorMsg}${diagnostic}.`);
+      if (import.meta.env.DEV) console.error("[AI Generation Error]", error);
+      if (error instanceof ApiClientError) {
+        const support = error.requestId ? ` Request ID: ${error.requestId}` : '';
+        setResult(`AI Engine Error: ${error.message} (${error.code}).${support}`);
+      } else {
+        setResult('AI Engine Error: POSTL could not reach the backend. Check the backend deployment and API configuration.');
+      }
     } finally {
       setLoading(false);
     }
@@ -252,7 +255,8 @@ const GeneratePost: React.FC = () => {
         setElapsedMs(variants[0].provider?.latencyMs || 0);
       }
     } catch (error: any) {
-      console.error("[Variants Error]:", error.message);
+      if (import.meta.env.DEV) console.error("[Variants Error]:", error);
+      if (error instanceof ApiClientError) setResult(`AI Engine Error: ${error.message} (${error.code}).${error.requestId ? ` Request ID: ${error.requestId}` : ''}`);
     } finally {
       setLoading(false);
     }

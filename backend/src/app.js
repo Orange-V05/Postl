@@ -21,7 +21,7 @@ export function createApp() {
   app.use(helmet());
   app.use(cors({
     origin(origin, callback) {
-      if (!origin && !env.isProduction) return callback(null, true);
+      if (!origin) return callback(null, true);
       if (env.allowedOrigins.includes(origin)) return callback(null, true);
       return callback(new Error('Origin is not allowed by CORS policy.'));
     },

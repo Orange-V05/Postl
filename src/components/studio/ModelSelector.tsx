@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getModels } from '../../api/client';
 
-const FALLBACK_MODELS = [
-  { id: 'local-gemma', label: 'Local Ollama (configured by backend)', capabilities: ['generation'], local: true },
-];
+type ModelOption = { id: string; label: string; capabilities: string[]; local: boolean; privacy?: string; provider?: string };
 
 interface ModelSelectorProps {
   selectedModel: string;
@@ -11,23 +9,26 @@ interface ModelSelectorProps {
 }
 
 const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, setSelectedModel }) => {
-  const [models, setModels] = useState(FALLBACK_MODELS);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'offline'>('loading');
+  const [models, setModels] = useState<ModelOption[]>([]);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'offline' | 'empty'>('loading');
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     let mounted = true;
     getModels()
       .then((data) => {
         if (!mounted) return;
-        const available = data.models.length > 0 ? data.models : FALLBACK_MODELS;
+        const available = data.models;
         setModels(available);
-        setStatus(data.models.length > 0 ? 'ready' : 'offline');
-        if (!available.some((model) => model.id === selectedModel)) setSelectedModel(available[0].id);
+        setStatus(data.models.length > 0 ? 'ready' : 'empty');
+        setMessage(data.models.length > 0 ? '' : 'No AI models are enabled on the backend. Configure OpenRouter for production or Ollama for local development.');
+        if (available.length > 0 && !available.some((model) => model.id === selectedModel)) setSelectedModel(available[0].id);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!mounted) return;
-        setModels(FALLBACK_MODELS);
+        setModels([]);
         setStatus('offline');
+        setMessage(err?.message || 'POSTL backend is unavailable. Model discovery is disabled until the API is configured and reachable.');
       });
     return () => { mounted = false; };
   }, []);
@@ -37,10 +38,15 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, setSelecte
       <div className="flex items-center justify-between px-1">
         <label className="text-[10px] font-black text-[var(--muted-color)] uppercase tracking-widest">AI Engine</label>
         <span className={`text-[8px] font-black uppercase tracking-widest ${status === 'ready' ? 'text-emerald-500' : 'text-amber-500'}`}>
-          {status === 'loading' ? 'Checking' : status === 'ready' ? 'Live models' : 'Fallback list'}
+          {status === 'loading' ? 'Checking' : status === 'ready' ? 'Live models' : status === 'empty' ? 'No models' : 'Backend offline'}
         </span>
       </div>
       <div className="grid grid-cols-1 gap-2 p-2 rounded-2xl bg-[var(--input-bg)] border border-[var(--input-border)]">
+        {message && (
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-[10px] font-bold leading-relaxed text-amber-500">
+            {message}
+          </div>
+        )}
         {models.map((model) => (
           <button
             key={model.id}
@@ -54,7 +60,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, setSelecte
             <div className="flex flex-col items-start">
               <span className="text-[11px] font-bold">{model.label}</span>
               <span className="text-[8px] opacity-50 uppercase tracking-tighter">
-                {model.local ? 'Local' : 'Cloud'} • {model.capabilities.join(', ')}
+                {model.local ? 'Local' : 'Cloud'} • {model.privacy || (model.local ? 'local' : 'cloud')} • {model.capabilities.join(', ')}
               </span>
             </div>
             {selectedModel === model.id && (

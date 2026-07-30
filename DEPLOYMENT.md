@@ -126,3 +126,43 @@ Interpretation:
 - all steps `status=200 code=OK`: Firebase Email/Password is operational for that configuration. If production UI login still fails, inspect Vercel's deployed values, browser network response, form behavior, user account state, or post-login Firestore/profile initialization.
 
 On 2026-07-30, local config for project `postl-0` returned `200 OK` for disposable signup, signin, and delete. This proves the local Firebase browser config and Email/Password provider are functional. It does not prove the Vercel Production build contains the same values; Vercel dashboard scope and redeployment still need verification.
+
+## Provider-agnostic AI MVP update
+
+POSTL backend AI now uses friendly POSTL model IDs through a provider registry rather than exposing raw provider model names to the browser. Production should use OpenRouter as the primary cloud provider for low-cost MVP operation. Ollama remains available for local development only unless a real persistent inference host is deliberately configured.
+
+Production backend provider variables:
+
+- `AI_PRIMARY_PROVIDER=openrouter`
+- `AI_FALLBACK_PROVIDERS=huggingface,ollama` or another deliberate order
+- `AI_MODELS=balanced-cloud,economy-hf` to restrict exposed friendly model IDs, optional
+- `OPENROUTER_API_KEY` set only on the backend host
+- `OPENROUTER_MODEL` provider-specific model ID, for example `google/gemma-3-27b-it:free`
+- `OPENROUTER_HTTP_REFERER=https://postl.vercel.app`
+- `OPENROUTER_APP_TITLE=POSTL Content Intelligence`
+- `USER_DAILY_GENERATION_LIMIT=25`
+- `USER_DAILY_REPURPOSE_LIMIT=10`
+
+Do not set production Ollama to localhost. If Ollama is used outside development, deploy it as a separately secured persistent inference service and point `OLLAMA_URL` to that service from the backend only.
+
+See `AI_PROVIDER_ARCHITECTURE.md` for the full provider abstraction, model registry, fallback, error, and quota design.
+
+### Provider-agnostic production activation checklist
+
+1. In Render, create the backend service from `https://github.com/Orange-V05/Postl` using `render.yaml`.
+2. Confirm service settings: root directory `backend`, build command `npm ci && npm run build`, start command `npm run start:prod`, plan `free`, health check `/api/health`.
+3. Add backend-only secrets in Render:
+   - `OPENROUTER_API_KEY`
+   - one Firebase Admin method: `FIREBASE_SERVICE_ACCOUNT_JSON`, or `FIREBASE_PROJECT_ID` plus `FIREBASE_CLIENT_EMAIL` plus `FIREBASE_PRIVATE_KEY`, or a secure credential path outside the repo.
+4. Keep cost safety enabled unless intentionally changed:
+   - `ALLOW_PAID_AI_MODELS=false`
+   - `OPENROUTER_FREE_MODELS=google/gemma-3-27b-it:free` or another administrator-confirmed free OpenRouter model list.
+5. Verify backend endpoints after deploy:
+   - `GET https://YOUR-RENDER-SERVICE.onrender.com/api/health` should return HTTP 200 when the process is alive.
+   - `GET https://YOUR-RENDER-SERVICE.onrender.com/api/ready` should return HTTP 200 only when Firebase Admin and at least one production provider are configured. A 503 here means the process is alive but not ready for authenticated generation.
+   - `GET https://YOUR-RENDER-SERVICE.onrender.com/api/models` should list `balanced-cloud` or another configured friendly cloud model and should not list local Ollama in production.
+6. In Vercel, set `VITE_API_BASE_URL` to the backend API base URL with no trailing slash, for example `https://YOUR-RENDER-SERVICE.onrender.com/api`.
+7. Redeploy Vercel after changing `VITE_API_BASE_URL` because Vite embeds it at build time.
+8. In a fresh browser, sign in, open the dashboard, confirm ModelSelector shows the backend cloud model, generate one post, and confirm the browser request goes to the Render backend rather than localhost or Vercel.
+
+OpenRouter free-model availability is controlled by OpenRouter and can change. Update `OPENROUTER_FREE_MODELS` in Render when a configured free model is removed or rate-limited. Do not switch to paid models unless `ALLOW_PAID_AI_MODELS=true` is an intentional administrator decision.

@@ -9,8 +9,17 @@ let initialized = false;
 let unavailableReason = '';
 
 function parseServiceAccount() {
-  if (env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    return JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_KEY);
+  const inlineJson = env.FIREBASE_SERVICE_ACCOUNT_JSON || env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  if (inlineJson) {
+    return JSON.parse(inlineJson);
+  }
+
+  if (env.FIREBASE_PROJECT_ID && env.FIREBASE_CLIENT_EMAIL && env.FIREBASE_PRIVATE_KEY) {
+    return {
+      project_id: env.FIREBASE_PROJECT_ID,
+      client_email: env.FIREBASE_CLIENT_EMAIL,
+      private_key: env.FIREBASE_PRIVATE_KEY,
+    };
   }
 
   if (env.FIREBASE_SERVICE_ACCOUNT_PATH && fs.existsSync(env.FIREBASE_SERVICE_ACCOUNT_PATH)) {

@@ -1,14 +1,17 @@
 import { Router } from 'express';
-import { getAvailableModels, getProviderStatus } from '../services/providers/providerRegistry.js';
+import { getRegistryDiagnostics } from '../services/providers/providerRegistry.js';
 import { PLATFORMS, OBJECTIVES, TONES } from '../services/generation/contentDefinitions.js';
 
 const router = Router();
 
 router.get('/models', (_req, res) => {
+  const registry = getRegistryDiagnostics();
   res.json({
     data: {
-      models: getAvailableModels(),
-      providers: getProviderStatus(),
+      models: registry.enabledModels,
+      providers: registry.providers,
+      activeProvider: registry.primaryProvider,
+      fallbackProviders: registry.fallbackProviders,
       platforms: PLATFORMS,
       objectives: OBJECTIVES,
       tones: TONES,

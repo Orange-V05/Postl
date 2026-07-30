@@ -1,8 +1,9 @@
 import { ApiError } from '../middleware/errorHandler.js';
 import { generateContent } from '../services/generation/generation.service.js';
+import { assertUserQuota } from '../services/quota/quota.service.js';
 
 export async function repurposeContent(req, res, next) {
-  const { sourceText, sourceType = 'notes', outputs = ['linkedin-single'], objective = 'education', audience = '', tone = 'professional', modelId = 'local-gemma' } = req.body || {};
+  const { sourceText, sourceType = 'notes', outputs = ['linkedin-single'], objective = 'education', audience = '', tone = 'professional', modelId = 'balanced-cloud' } = req.body || {};
   if (!sourceText || typeof sourceText !== 'string' || sourceText.length < 20) {
     return next(new ApiError('validation_error', 'sourceText must be at least 20 characters.', 400, false));
   }
@@ -11,6 +12,7 @@ export async function repurposeContent(req, res, next) {
   }
 
   try {
+    await assertUserQuota({ uid: req.user?.uid, kind: 'repurpose', requestId: req.requestId });
     const assets = [];
     for (const output of outputs) {
       const [platformRaw, formatRaw] = String(output).split('-');
