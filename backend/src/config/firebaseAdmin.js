@@ -1,5 +1,6 @@
 import fs from 'fs';
 import admin from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
 import { env } from './env.js';
 import { createLogger } from '../utils/logger.js';
 
@@ -67,4 +68,9 @@ export function getFirebaseAdminState() {
 
 export function getFirebaseAdmin() {
   return initialized ? admin : null;
+}
+
+export function getFirebaseFirestore() {
+  if (!initialized) return null;
+  return getFirestore(admin.app(), env.FIREBASE_FIRESTORE_DATABASE_ID);
 }

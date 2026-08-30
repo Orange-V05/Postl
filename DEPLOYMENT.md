@@ -33,6 +33,7 @@ Required Render backend variables:
 - `USER_DAILY_GENERATION_LIMIT=25`
 - `USER_DAILY_REPURPOSE_LIMIT=10`
 - Firebase Admin credentials for project `postl-0` via `FIREBASE_SERVICE_ACCOUNT_JSON`, or `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY`.
+- `FIREBASE_FIRESTORE_DATABASE_ID=(default)` unless the project uses a named Firestore database. This must match the database configured in Firebase/Google Cloud.
 
 Verify the OpenRouter allowlist from a secure backend/admin shell only:
 

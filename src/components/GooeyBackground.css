@@ -7,29 +7,28 @@
   left: 0;
 }
 
-/* Light Mode: Bold "Earth & Clay" Palette */
-/* Using darker colors because they multiply better on white */
-.light .gooey-container {
-  --color1: 154, 52, 18;   /* Burnt Orange */
-  --color2: 21, 128, 61;   /* Forest Green */
-  --color3: 126, 34, 206;  /* Deep Purple */
-  --color4: 180, 83, 9;    /* Rich Ochre */
-  --color5: 190, 24, 93;   /* Deep Rose */
-  --color-interactive: 16, 185, 129;
-  --blending: multiply; 
-  opacity: 0.6; /* High visibility in light mode */
+/* Light Mode: Ethereal Pastel Palette */
+.gooey-container {
+  --color1: 167, 243, 208; /* emerald-200 */
+  --color2: 186, 230, 253; /* sky-200 */
+  --color3: 221, 214, 254; /* violet-200 */
+  --color4: 167, 243, 208; /* emerald-200 */
+  --color5: 191, 219, 254; /* blue-200 */
+  --color-interactive: 52, 211, 153; /* emerald-400 */
+  --blending: normal;
+  opacity: 0.6;
 }
 
-/* Dark Mode: Vibrant "Neon Cyber" Palette */
+/* Dark Mode: Deep Cyber Palette */
 .dark .gooey-container {
-  --color1: 100, 100, 255;  /* Electric Blue */
-  --color2: 255, 80, 255;   /* Hot Pink */
-  --color3: 80, 255, 255;   /* Neon Cyan */
-  --color4: 255, 150, 50;   /* Bright Orange */
-  --color5: 200, 100, 255;  /* Purple Rain */
+  --color1: 16, 185, 129;  /* Emerald */
+  --color2: 6, 182, 212;   /* Cyan */
+  --color3: 139, 92, 246;  /* Violet */
+  --color4: 2, 132, 199;   /* Light Blue */
+  --color5: 52, 211, 153;  /* Emerald Lighter */
   --color-interactive: 16, 185, 129;
   --blending: screen;
-  opacity: 0.8;
+  opacity: 0.25;
 }
 
 @keyframes moveInCircle {

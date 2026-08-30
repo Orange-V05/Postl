@@ -23,6 +23,7 @@ const schema = Joi.object({
   FIREBASE_PROJECT_ID: Joi.string().allow('').default(''),
   FIREBASE_CLIENT_EMAIL: Joi.string().allow('').default(''),
   FIREBASE_PRIVATE_KEY: Joi.string().allow('').default(''),
+  FIREBASE_FIRESTORE_DATABASE_ID: Joi.string().trim().default('(default)'),
   AI_PRIMARY_PROVIDER: Joi.string().valid('ollama', 'openrouter', 'huggingface').allow('').default(''),
   AI_FALLBACK_PROVIDERS: Joi.string().allow('').default(''),
   OLLAMA_URL: Joi.string().uri({ scheme: ['http', 'https'] }).default('http://localhost:11434'),

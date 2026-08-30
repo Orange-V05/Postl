@@ -1,5 +1,5 @@
 import { env } from '../../config/env.js';
-import { getFirebaseAdmin } from '../../config/firebaseAdmin.js';
+import { getFirebaseAdmin, getFirebaseFirestore } from '../../config/firebaseAdmin.js';
 import { ApiError } from '../../middleware/errorHandler.js';
 import { createLogger } from '../../utils/logger.js';
 import { isFirebaseNotFound, safeFirebaseErrorMeta, safeHashId } from '../../utils/firebaseDiagnostics.js';
@@ -104,12 +104,12 @@ export async function assertUserQuota({ uid, kind = 'generation', requestId }) {
   if (!uid) throw new ApiError('authentication_required', 'Authentication is required for AI requests.', 401, false);
   if (limit === 0) return { limit, remaining: Number.POSITIVE_INFINITY, used: 0, day: dayKey() };
 
-  const admin = getFirebaseAdmin();
-  if (!admin) throw new ApiError('quota_unavailable', 'Usage quota service is unavailable because Firebase Admin is not configured.', 503, true);
+  const firestore = getFirebaseFirestore();
+  if (!firestore) throw new ApiError('quota_unavailable', 'Usage quota service is unavailable because Firebase Admin is not configured.', 503, true);
 
   return reserveUserQuota({
-    firestore: admin.firestore(),
-    FieldValue: admin.firestore.FieldValue,
+    firestore,
+    FieldValue: getFirebaseAdmin().firestore.FieldValue,
     uid,
     kind,
     limit,
