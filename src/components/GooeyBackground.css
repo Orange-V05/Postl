@@ -9,26 +9,26 @@
 
 /* Light Mode: Ethereal Pastel Palette */
 .gooey-container {
-  --color1: 167, 243, 208; /* emerald-200 */
-  --color2: 186, 230, 253; /* sky-200 */
-  --color3: 221, 214, 254; /* violet-200 */
-  --color4: 167, 243, 208; /* emerald-200 */
-  --color5: 191, 219, 254; /* blue-200 */
-  --color-interactive: 52, 211, 153; /* emerald-400 */
+  --color1: 224, 231, 255; /* indigo-100 */
+  --color2: 219, 234, 254; /* blue-100 */
+  --color3: 221, 214, 254; /* violet-100 (approx) */
+  --color4: 224, 242, 254; /* sky-100 */
+  --color5: 252, 231, 243; /* pink-100 */
+  --color-interactive: 199, 210, 254; /* indigo-200 */
   --blending: normal;
-  opacity: 0.6;
+  opacity: 0.8;
 }
 
-/* Dark Mode: Deep Cyber Palette */
+/* Dark Mode: Deep Cyber / Galaxy Palette */
 .dark .gooey-container {
-  --color1: 16, 185, 129;  /* Emerald */
-  --color2: 6, 182, 212;   /* Cyan */
-  --color3: 139, 92, 246;  /* Violet */
-  --color4: 2, 132, 199;   /* Light Blue */
-  --color5: 52, 211, 153;  /* Emerald Lighter */
-  --color-interactive: 16, 185, 129;
+  --color1: 79, 70, 229;   /* Indigo-600 */
+  --color2: 6, 182, 212;   /* Cyan-500 */
+  --color3: 139, 92, 246;  /* Violet-500 */
+  --color4: 14, 165, 233;  /* Sky-500 */
+  --color5: 236, 72, 153;  /* Pink-500 */
+  --color-interactive: 124, 58, 237; /* Violet-600 */
   --blending: screen;
-  opacity: 0.25;
+  opacity: 0.15;
 }
 
 @keyframes moveInCircle {
