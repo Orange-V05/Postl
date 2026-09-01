@@ -14,6 +14,19 @@ export async function generatePost(req, res, next) {
     const data = await generateContent({ request: value, user: req.user, requestId: req.requestId });
     return res.json({ data, error: null });
   } catch (err) {
+    // If quota is exceeded, return a friendly, non-error envelope so the frontend
+    // can show a helpful UI instead of treating this as a hard server error.
+    if (err instanceof ApiError && err.code === 'quota_exceeded') {
+      return res.json({
+        data: {
+          requestId: req.requestId,
+          variants: [],
+          benchmarkTiming: { recommendation: 'Quota reached', source: 'quota' },
+          message: 'Daily generation quota reached. Try again tomorrow.'
+        },
+        error: null,
+      });
+    }
     return next(err);
   }
 }

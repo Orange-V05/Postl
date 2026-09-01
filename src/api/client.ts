@@ -1,4 +1,4 @@
-import { validateApiBaseUrl } from '../config/apiConfig';
+﻿import { validateApiBaseUrl } from '../config/apiConfig';
 
 export interface ApiEnvelope<T> {
   data: T | null;
@@ -36,8 +36,12 @@ export async function apiRequest<T>(path: string, options: RequestInit & { token
   if (apiConfigError) {
     throw new ApiClientError(503, { code: 'api_not_configured', message: apiConfigError, requestId, retryable: false });
   }
+
   const controller = new AbortController();
-  const signal = options.signal ? AbortSignal.any([options.signal, controller.signal]) : controller.signal;
+  // Use AbortSignal.any when available to combine caller and timeout signals safely.
+  const signal = options.signal && typeof (AbortSignal as any).any === 'function'
+    ? (AbortSignal as any).any([options.signal, controller.signal])
+    : controller.signal;
   const timeout = window.setTimeout(() => controller.abort(), options.timeoutMs ?? 60000);
   const headers = new Headers(options.headers);
   headers.set('Content-Type', 'application/json');

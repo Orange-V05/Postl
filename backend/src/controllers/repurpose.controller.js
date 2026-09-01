@@ -24,6 +24,17 @@ export async function repurposeContent(req, res, next) {
     }
     res.json({ data: { requestId: req.requestId, assets }, error: null });
   } catch (err) {
+    // Gracefully handle quota exceeded by returning an empty-but-successful envelope.
+    if (err instanceof ApiError && err.code === 'quota_exceeded') {
+      return res.json({
+        data: {
+          requestId: req.requestId,
+          assets: [],
+          message: 'Daily repurpose quota reached. Try again tomorrow.'
+        },
+        error: null,
+      });
+    }
     next(err);
   }
 }
