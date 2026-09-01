@@ -258,20 +258,51 @@ const renderFormattedContent = (text: string, category: string, fontSize: number
 };
 
 const PostResultView: React.FC<PostResultViewProps> = ({
-  result, allVariants, imagePrompt, category, platform, seed, fontSize,
+  result, allVariants, category, platform, fontSize,
   copied, handleCopy, feedbackStatus, handleFeedback,
   strategyBrief, onRegenerate, loading, elapsedMs, meta
 }) => {
   const [activeVariant, setActiveVariant] = useState(0);
+  const [isDark, setIsDark] = useState(false);
   const variants = allVariants && allVariants.length > 0 ? allVariants : (result ? [result] : []);
   const currentText = variants[activeVariant] || result || '';
   const { displayed, isTyping } = useTypewriter(currentText);
   const contentStats = analyzeContent(currentText);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    const syncTheme = () => setIsDark(document.documentElement.classList.contains('dark') || Boolean(media?.matches));
+    syncTheme();
+
+    const observer = new MutationObserver(syncTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    media?.addEventListener?.('change', syncTheme);
+    return () => {
+      observer.disconnect();
+      media?.removeEventListener?.('change', syncTheme);
+    };
+  }, []);
+
   // Reset active variant on new results
   useEffect(() => {
     setActiveVariant(0);
   }, [result]);
+
+  const paletteByPlatform: Record<string, { from: string; via: string; to: string; accent: string; glow: string }> = {
+    twitter: { from: '#7c3aed', via: '#06b6d4', to: '#10b981', accent: '#d8b4fe', glow: 'rgba(167,139,250,0.28)' },
+    instagram: { from: '#ec4899', via: '#f59e0b', to: '#8b5cf6', accent: '#fbcfe8', glow: 'rgba(244,114,182,0.28)' },
+    linkedin: { from: '#2563eb', via: '#0ea5e9', to: '#14b8a6', accent: '#bfdbfe', glow: 'rgba(59,130,246,0.25)' },
+    tiktok: { from: '#14b8a6', via: '#38bdf8', to: '#f472b6', accent: '#a7f3d0', glow: 'rgba(20,184,166,0.28)' },
+    email: { from: '#f59e0b', via: '#fb7185', to: '#ef4444', accent: '#fde68a', glow: 'rgba(245,158,11,0.26)' },
+    blog: { from: '#8b5cf6', via: '#6366f1', to: '#22d3ee', accent: '#ddd6fe', glow: 'rgba(139,92,246,0.24)' },
+    ad: { from: '#f43f5e', via: '#fb7185', to: '#f59e0b', accent: '#fecdd3', glow: 'rgba(244,63,94,0.25)' },
+  };
+
+  const artPalette = paletteByPlatform[platform] || paletteByPlatform.twitter;
+  const artTitle = `${platformLabels[platform] || 'Campaign'} concept`;
 
   return (
     <AnimatePresence mode="wait">
@@ -286,16 +317,34 @@ const PostResultView: React.FC<PostResultViewProps> = ({
         >
           {/* Background Visual */}
           <div className="absolute inset-0 z-0">
-            <motion.img
-              initial={{ scale: 1.2, filter: "blur(20px)" }}
-              animate={{ scale: 1, filter: "blur(0px)" }}
-              transition={{ duration: 1.5, ease: "easeOut" }}
-              src={`https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt || category)}?width=1200&height=1200&nologo=true&seed=${seed}`}
-              alt="AI-generated visual"
-              className="w-full h-full object-cover opacity-30 dark:opacity-20 group-hover/result:scale-105 transition-transform duration-[3s] ease-out"
+            <motion.div
+              initial={{ scale: 1.15, opacity: 0.5 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 1.2, ease: 'easeOut' }}
+              className="absolute inset-0"
+              style={{
+                background: `radial-gradient(circle at 20% 20%, ${artPalette.accent} 0%, transparent 22%), radial-gradient(circle at 80% 0%, ${artPalette.to} 0%, transparent 30%), linear-gradient(135deg, ${isDark ? '#09090b' : '#fffaf6'} 0%, ${artPalette.from} 30%, ${artPalette.via} 60%, ${artPalette.to} 100%)`,
+              }}
             />
-            <div className="absolute inset-0 bg-gradient-to-tr from-[var(--bg-color)] via-[var(--bg-color)]/95 dark:via-[#030712]/95 to-[var(--bg-color)]/40 dark:to-[#030712]/40" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.06),transparent_70%)]" />
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 30, ease: 'linear', repeat: Infinity }}
+              className="absolute -right-16 -top-12 h-64 w-64 rounded-full border border-white/15"
+              style={{ boxShadow: `0 0 80px ${artPalette.glow}` }}
+            />
+            <motion.div
+              animate={{ rotate: -360 }}
+              transition={{ duration: 40, ease: 'linear', repeat: Infinity }}
+              className="absolute -left-12 bottom-0 h-56 w-56 rounded-full border border-white/15"
+              style={{ boxShadow: `0 0 80px ${artPalette.glow}` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-tr from-[var(--bg-color)] via-[var(--bg-color)]/90 to-[var(--bg-color)]/25" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.18),transparent_35%)]" />
+            <div className="absolute inset-x-8 top-8 flex items-center justify-between rounded-full border border-white/15 bg-white/5 px-4 py-2 backdrop-blur-sm text-[9px] font-black uppercase tracking-[0.25em] text-white/85">
+              <span>{artTitle}</span>
+              <span className="text-[10px]">•</span>
+              <span>{category}</span>
+            </div>
           </div>
 
           {/* Content */}

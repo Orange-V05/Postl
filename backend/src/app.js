@@ -47,6 +47,19 @@ export function createApp() {
   api.use(feedbackRoutes);
   api.use(repurposeRoutes);
 
+  app.get('/', (_req, res) => {
+    res.json({
+      data: {
+        status: 'ok',
+        service: 'POSTL backend',
+        version: '4.1',
+        environment: env.NODE_ENV,
+        api: '/api',
+      },
+      error: null,
+    });
+  });
+
   app.use('/api', api);
   app.use('/.netlify/functions/api', api);
   if (!env.isProduction) app.use('/', api);

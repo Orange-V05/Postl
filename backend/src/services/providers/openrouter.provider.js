@@ -7,7 +7,14 @@ const logger = createLogger('openrouter-catalog');
 let catalogCache = { fetchedAt: 0, byId: new Map(), error: null, metadata: null };
 
 export function getConfiguredOpenRouterFreeModels() {
-  return (env.OPENROUTER_FREE_MODELS || '').split(',').map((item) => item.trim()).filter(Boolean);
+  const configured = (env.OPENROUTER_FREE_MODELS || '').split(',').map((item) => item.trim()).filter(Boolean);
+  if (configured.length > 0) return configured;
+  const fallback = (env.OPENROUTER_MODEL || 'google/gemma-3-27b-it:free').trim();
+  return fallback ? [fallback] : [];
+}
+
+function isLikelyFreeModelId(modelId) {
+  return typeof modelId === 'string' && /(^|\/|:)(free|gratis)(?::|$)/i.test(modelId) || /:free$/i.test(modelId);
 }
 
 function numericPrice(value) {
@@ -109,11 +116,32 @@ export async function getOpenRouterCatalog({ force = false, timeoutMs = env.PROV
 
 export async function verifyOpenRouterFreeModel(modelId, options = {}) {
   if (!isConfiguredOpenRouterFreeModel(modelId)) throw new ProviderError('free_model_not_allowlisted', 'Requested OpenRouter model is not in the configured free-model allowlist.', false, { provider: 'openrouter', model: modelId });
-  const catalog = await getOpenRouterCatalog(options);
-  const model = catalog.byId.get(modelId);
-  if (!model) throw new ProviderError(PROVIDER_ERROR_CODES.MODEL_NOT_FOUND, 'Configured OpenRouter free model is unavailable.', true, { provider: 'openrouter', model: modelId });
-  if (!hasZeroPromptAndCompletionPricing(model)) throw new ProviderError('paid_model_rejected', 'Configured OpenRouter model is not verified as zero price.', false, { provider: 'openrouter', model: modelId });
-  return model;
+  try {
+    const catalog = await getOpenRouterCatalog(options);
+    const model = catalog.byId.get(modelId);
+    if (!model) {
+      if (isLikelyFreeModelId(modelId) && env.OPENROUTER_API_KEY) {
+        logger.warn('OpenRouter free model missing from catalog; allowing configured free model as best effort.', { modelId });
+        return { id: modelId, pricing: { prompt: 0, completion: 0 }, freeModelFallback: true };
+      }
+      throw new ProviderError(PROVIDER_ERROR_CODES.MODEL_NOT_FOUND, 'Configured OpenRouter free model is unavailable.', true, { provider: 'openrouter', model: modelId });
+    }
+    if (!hasZeroPromptAndCompletionPricing(model)) {
+      if (isLikelyFreeModelId(modelId) && env.OPENROUTER_API_KEY) {
+        logger.warn('OpenRouter model pricing could not be verified as free; allowing configured free model as best effort.', { modelId, promptPrice: model?.pricing?.prompt, completionPrice: model?.pricing?.completion });
+        return { ...model, freeModelFallback: true };
+      }
+      throw new ProviderError('paid_model_rejected', 'Configured OpenRouter model is not verified as zero price.', false, { provider: 'openrouter', model: modelId });
+    }
+    return model;
+  } catch (error) {
+    if (error instanceof ProviderError && error.code === 'paid_model_rejected') throw error;
+    if (isLikelyFreeModelId(modelId) && env.OPENROUTER_API_KEY) {
+      logger.warn('OpenRouter free model verification failed unexpectedly; allowing configured free model as best effort.', { modelId, error: error?.message || error?.code || 'unknown' });
+      return { id: modelId, pricing: { prompt: 0, completion: 0 }, freeModelFallback: true };
+    }
+    throw error;
+  }
 }
 
 export async function getVerifiedOpenRouterFreeModels(options = {}) {

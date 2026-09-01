@@ -206,7 +206,12 @@ const GeneratePost: React.FC = () => {
       if (import.meta.env.DEV) console.error("[AI Generation Error]", error);
       if (error instanceof ApiClientError) {
         const support = error.requestId ? ` Request ID: ${error.requestId}` : '';
-        setResult(`AI Engine Error: ${error.message} (${error.code}).${support}`);
+        const friendlyMessage = error.code === 'free_models_temporarily_unavailable'
+          ? 'The free AI engine is temporarily unavailable. Please try again in a moment.'
+          : error.code === 'quota_exceeded'
+            ? 'Your daily content quota is full. Please try again tomorrow.'
+            : `${error.message} (${error.code})`;
+        setResult(`AI Engine Error: ${friendlyMessage}.${support}`);
       } else {
         setResult('AI Engine Error: POSTL could not reach the backend. Check the backend deployment and API configuration.');
       }
