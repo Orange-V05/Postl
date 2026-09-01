@@ -5,6 +5,7 @@ import { AuthContext } from '../context/AuthContext';
 vi.mock('../firebase', () => ({ db: {} }));
 vi.mock('firebase/firestore', () => ({ collection: vi.fn(), addDoc: vi.fn(), serverTimestamp: vi.fn(() => new Date()) }));
 vi.mock('../api/client', () => ({
+
   getModels: vi.fn(async () => ({ models: [{ id: 'balanced-cloud', label: 'Balanced Cloud', capabilities: ['generation'], local: false, privacy: 'cloud' }], platforms: {}, objectives: [], tones: [] })),
   generatePost: vi.fn(),
   ApiClientError: class ApiClientError extends Error {},

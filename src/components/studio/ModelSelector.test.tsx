@@ -3,6 +3,7 @@ import ModelSelector from './ModelSelector';
 import { getModels } from '../../api/client';
 
 vi.mock('../../api/client', () => ({
+
   getModels: vi.fn(),
 }));
 

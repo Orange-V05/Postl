@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { test } from 'vitest';
 import { catalogErrorCode, catalogModelsFromPayload, evaluateConfiguredOpenRouterModels, hasZeroPromptAndCompletionPricing, isConfiguredOpenRouterFreeModel, refreshOpenRouterCatalog } from '../src/services/providers/openrouter.provider.js';
 
 test('OpenRouter pricing helper accepts exactly zero prompt and completion prices', () => {
