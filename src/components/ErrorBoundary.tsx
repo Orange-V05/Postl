@@ -26,33 +26,33 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen aurora-bg flex items-center justify-center p-8">
-          <div className="glass-panel p-10 rounded-[2.5rem] border-red-500/20 max-w-lg text-center shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500/50 to-transparent"></div>
-            <h2 className="text-3xl font-black text-white mb-4 tracking-tighter uppercase">Neural Studio Error</h2>
-            <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 mb-8 text-left">
-              <p className="text-red-400 font-mono text-xs break-all leading-relaxed whitespace-pre-wrap">
-                {import.meta.env.PROD ? 'Something went wrong while loading POSTL. No private diagnostic details are shown in production.' : (this.state.error?.toString() || "Unknown unhandled exception")}
-              </p>
-            </div>
-            <p className="text-slate-400 mb-8 font-medium leading-relaxed text-sm">
-              Please click 'Hard Reset' below to clear your local cache and restore the studio.
+        <div className="flex min-h-screen items-center justify-center bg-[var(--bg-color)] p-6 text-[var(--text-color)]">
+          <div role="alert" className="w-full max-w-md rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-8">
+            <h2 className="text-xl font-medium tracking-tight">Something went wrong</h2>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--muted-color)]">
+              POSTL hit an error it couldn't recover from. Reloading usually fixes it. If it keeps happening, clear the
+              data saved in this browser and reload.
             </p>
-            <div className="flex flex-col gap-4">
+            <pre className="mt-6 whitespace-pre-wrap break-all rounded-lg border border-danger/25 bg-danger/5 p-4 font-mono text-xs leading-relaxed text-[var(--danger)]">
+              {import.meta.env.PROD
+                ? "Something went wrong while loading POSTL. No private diagnostic details are shown in production."
+                : this.state.error?.toString() || "Unknown unhandled exception"}
+            </pre>
+            <div className="mt-6 flex flex-col gap-2">
               <button
                 onClick={() => window.location.reload()}
-                className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20"
+                className="h-10 w-full rounded-lg bg-[var(--text-color)] text-sm font-medium text-[var(--bg-color)] transition-opacity duration-150 hover:opacity-85"
               >
-                REFRESH PAGE
+                Reload page
               </button>
               <button
                 onClick={() => {
                   localStorage.clear();
                   window.location.reload();
                 }}
-                className="w-full py-4 bg-white/5 border border-white/10 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 transition-all"
+                className="h-10 w-full rounded-lg border border-[var(--hairline-strong)] text-sm text-[var(--muted-color)] transition-colors duration-150 hover:text-[var(--danger)]"
               >
-                HARD RESET (CLEAR ALL CACHE)
+                Clear local data and reload
               </button>
             </div>
           </div>

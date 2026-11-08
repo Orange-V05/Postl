@@ -64,10 +64,10 @@ const PromptInputArea: React.FC<PromptInputAreaProps> = ({
   return (
     <>
       <div className="flex items-center justify-between mb-3 ml-1">
-        <label className="text-[10px] font-black text-[var(--muted-color)] uppercase tracking-widest">
+        <label className="text-xs font-medium text-[var(--muted-color)]">
           Prompt
         </label>
-        <span className={`text-[10px] font-mono font-bold transition-colors ${charCount > 400 ? 'text-red-500' : charCount > 300 ? 'text-amber-500' : 'text-[var(--muted-color)]'}`}>
+        <span className={`text-xs font-mono font-medium transition-colors ${charCount > 400 ? 'text-danger' : charCount > 300 ? 'text-amber-500' : 'text-[var(--muted-color)]'}`}>
           {charCount > 0 ? `${charCount} / 500` : ''}
         </span>
       </div>
@@ -77,13 +77,12 @@ const PromptInputArea: React.FC<PromptInputAreaProps> = ({
           ref={textareaRef}
           rows={3}
           maxLength={500}
-          className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-2xl p-5 text-[var(--text-color)] placeholder:text-[var(--muted-color)]/40 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium resize-none relative z-10 min-h-[100px]"
+          className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-2xl p-5 text-[var(--text-color)] placeholder:text-muted/40 focus:outline-none focus:border-accent/50 focus:ring-4 focus:ring-accent/10 transition-colors font-medium resize-none relative z-10 min-h-[100px]"
           placeholder={placeholders[placeholderIdx]}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
         />
         {/* AI Attention Glow */}
-        <div className={`absolute inset-0 rounded-2xl blur-xl bg-emerald-500/10 transition-opacity duration-700 pointer-events-none ${prompt.length > 5 ? 'opacity-100' : 'opacity-0'}`} />
       </div>
 
       {/* AI Assist Chips */}
@@ -92,7 +91,7 @@ const PromptInputArea: React.FC<PromptInputAreaProps> = ({
           <button
             key={i}
             onClick={() => insertChip(chip.text)}
-            className="px-2.5 py-1.5 rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] text-[9px] font-bold text-[var(--muted-color)] hover:text-emerald-500 hover:border-emerald-500/30 transition-all"
+            className="px-2.5 py-1.5 rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] text-xs font-medium text-[var(--muted-color)] hover:text-accent hover:border-accent/30 transition-colors"
           >
             {chip.label}
           </button>
@@ -102,10 +101,10 @@ const PromptInputArea: React.FC<PromptInputAreaProps> = ({
       <div className="space-y-5 mb-6">
         <div className="px-1">
           <div className="flex justify-between items-center mb-3">
-            <label className="text-[10px] font-black text-[var(--muted-color)] uppercase tracking-widest">Creativity</label>
+            <label className="text-xs font-medium text-[var(--muted-color)]">Creativity</label>
             <div className="flex items-center gap-2">
-              <span className="text-[9px] font-bold text-emerald-500 uppercase">{creativityLabel}</span>
-              <span className="text-emerald-400 text-[10px] font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md">{Math.round(creativity * 100)}%</span>
+              <span className="text-xs font-medium text-accent">{creativityLabel}</span>
+              <span className="text-accent text-xs font-mono font-medium bg-accent/10 px-2 py-0.5 rounded-md">{Math.round(creativity * 100)}%</span>
             </div>
           </div>
           <input
@@ -120,8 +119,8 @@ const PromptInputArea: React.FC<PromptInputAreaProps> = ({
 
         <div className="px-1">
           <div className="flex justify-between items-center mb-3">
-            <label className="text-[10px] font-black text-[var(--muted-color)] uppercase tracking-widest">Visual Size</label>
-            <span className="text-emerald-400 text-[10px] font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md">{fontSize}px</span>
+            <label className="text-xs font-medium text-[var(--muted-color)]">Visual Size</label>
+            <span className="text-accent text-xs font-mono font-medium bg-accent/10 px-2 py-0.5 rounded-md">{fontSize}px</span>
           </div>
           <input
             type="range"

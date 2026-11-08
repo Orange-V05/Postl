@@ -16,7 +16,7 @@ export default function PrivateRoute({ children }: PrivateRouteProps) {
     // Wait for Firebase to check auth state
     return (
       <div className="min-h-screen aurora-bg flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-accent/30 border-t-accent rounded-full animate-spin"></div>
       </div>
     );
   }

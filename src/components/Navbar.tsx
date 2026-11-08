@@ -2,8 +2,10 @@ import React, { useContext, useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { useStore } from "../store/useStore";
-import { FaRocket, FaSignOutAlt, FaColumns, FaMoon, FaSun, FaBars, FaTimes } from "react-icons/fa";
+import { LayoutGrid, LogOut, Moon, Sun, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const ease = [0.22, 1, 0.36, 1] as const;
 
 const Navbar: React.FC = () => {
   const auth = useContext(AuthContext);
@@ -15,12 +17,11 @@ const Navbar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
+    const handleScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
@@ -33,7 +34,6 @@ const Navbar: React.FC = () => {
     navigate("/login");
   };
 
-  const isHome = location.pathname === "/";
   const isActive = (path: string) => location.pathname === path;
 
   const toggleDarkMode = () => {
@@ -42,145 +42,135 @@ const Navbar: React.FC = () => {
     }
   };
 
-  // User initial avatar
-  const userInitial = user?.email ? user.email[0].toUpperCase() : 'U';
+  const userInitial = user?.email ? user.email[0].toUpperCase() : "U";
+  const themeLabel = prefs?.darkMode ? "Switch to light mode" : "Switch to dark mode";
+  const ThemeIcon = prefs?.darkMode ? Sun : Moon;
+
+  const linkBase =
+    "inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm transition-colors duration-150";
+  const linkIdle = "text-[var(--muted-color)] hover:text-[var(--text-color)] hover:bg-[var(--surface-2)]";
+  const linkActive = "text-[var(--text-color)] bg-[var(--surface-2)]";
 
   return (
     <>
-      <nav className="fixed top-0 left-0 w-full z-[100] px-4 sm:px-6 py-3 sm:py-4 pointer-events-none">
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className={`max-w-7xl mx-auto rounded-2xl px-5 sm:px-8 py-3 flex justify-between items-center pointer-events-auto transition-all duration-500 ${
-            scrolled
-              ? 'glass-panel shadow-2xl border-[var(--glass-border)]'
-              : isHome
-                ? 'bg-transparent border border-transparent'
-                : 'glass-panel border-[var(--glass-border)]'
-          }`}
-        >
-          <Link to="/" aria-label="POSTL Home" className="flex items-center space-x-3 group">
-            <motion.div whileHover={{ rotate: 15 }} transition={{ type: "spring", stiffness: 400 }}>
-              <FaRocket className="text-emerald-500 text-xl" />
-            </motion.div>
-            <span className="font-display font-bold text-[var(--text-color)] tracking-tighter text-xl">POSTL</span>
-            <span className="hidden sm:inline-flex text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-full">v4</span>
+      <nav
+        className={`fixed top-0 left-0 z-[100] w-full border-b transition-colors duration-200 ${
+          scrolled || mobileOpen
+            ? "border-[var(--hairline)] bg-[var(--bg-color)]"
+            : "border-transparent bg-transparent"
+        }`}
+      >
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <Link to="/" aria-label="POSTL Home" className="flex items-center gap-2.5">
+            <span className="grid h-7 w-7 place-items-center rounded-md bg-[var(--text-color)] font-mono text-sm font-medium text-[var(--bg-color)]">
+              P
+            </span>
+            <span className="text-[15px] font-medium tracking-tight text-[var(--text-color)]">POSTL</span>
           </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center space-x-4">
-            <motion.button
+          <div className="hidden items-center gap-1 md:flex">
+            <button
               onClick={toggleDarkMode}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              aria-label={prefs?.darkMode ? "Switch to light mode" : "Switch to dark mode"}
-              className="text-[var(--muted-color)] hover:text-[var(--text-color)] transition-colors p-2 rounded-xl hover:bg-[var(--input-bg)]"
+              aria-label={themeLabel}
+              title={themeLabel}
+              className="grid h-9 w-9 place-items-center rounded-lg text-[var(--muted-color)] transition-colors duration-150 hover:bg-[var(--surface-2)] hover:text-[var(--text-color)]"
             >
-              {prefs?.darkMode ? <FaSun className="text-lg" /> : <FaMoon className="text-lg" />}
-            </motion.button>
+              <ThemeIcon size={16} strokeWidth={1.75} />
+            </button>
             {user ? (
               <>
                 <Link
                   to="/dashboard"
                   aria-label="Go to Dashboard"
-                  className={`flex items-center space-x-2 text-xs font-black uppercase tracking-widest transition-all px-4 py-2 rounded-xl ${
-                    isActive('/dashboard') || isActive('/generate')
-                      ? 'text-emerald-500 bg-emerald-500/10'
-                      : 'text-[var(--muted-color)] hover:text-[var(--text-color)] hover:bg-[var(--input-bg)]'
-                  }`}
+                  className={`${linkBase} ${isActive("/dashboard") || isActive("/generate") ? linkActive : linkIdle}`}
                 >
-                  <FaColumns className="text-emerald-500" />
+                  <LayoutGrid size={16} strokeWidth={1.75} />
                   <span>Dashboard</span>
                 </Link>
-                <div className="h-4 w-[1px] bg-[var(--glass-border)]" />
-                
-                {/* User Avatar */}
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-emerald-500/20">
-                    {userInitial}
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    aria-label="Logout"
-                    className="flex items-center space-x-2 text-xs font-black text-red-500/70 hover:text-red-500 uppercase tracking-widest transition-colors p-2 rounded-xl hover:bg-red-500/5"
-                  >
-                    <FaSignOutAlt />
-                    <span>Logout</span>
-                  </button>
-                </div>
+                <span className="mx-2 h-5 w-px bg-[var(--hairline-strong)]" />
+                <span
+                  className="grid h-8 w-8 place-items-center rounded-full border border-[var(--hairline-strong)] bg-[var(--surface-2)] text-xs font-medium text-[var(--text-color)]"
+                  title={user.email ?? undefined}
+                >
+                  {userInitial}
+                </span>
+                <button onClick={handleLogout} aria-label="Logout" className={`${linkBase} ${linkIdle}`}>
+                  <LogOut size={16} strokeWidth={1.75} />
+                  <span>Logout</span>
+                </button>
               </>
             ) : (
               <>
-                <Link to="/login" aria-label="Go to Login" className={`text-xs font-black uppercase tracking-widest transition-all px-4 py-2 rounded-xl ${
-                  isActive('/login') ? 'text-emerald-500 bg-emerald-500/10' : 'text-[var(--muted-color)] hover:text-[var(--text-color)] hover:bg-[var(--input-bg)]'
-                }`}>
+                <Link
+                  to="/login"
+                  aria-label="Go to Login"
+                  className={`${linkBase} ${isActive("/login") ? linkActive : linkIdle}`}
+                >
                   Login
                 </Link>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Link to="/signup" aria-label="Go to Signup" className="bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all shadow-lg shadow-emerald-500/20">
-                    Join Free
-                  </Link>
-                </motion.div>
+                <Link
+                  to="/signup"
+                  aria-label="Go to Signup"
+                  className="ml-1 inline-flex h-9 items-center rounded-lg bg-[var(--text-color)] px-4 text-sm font-medium text-[var(--bg-color)] transition-opacity duration-150 hover:opacity-85"
+                >
+                  Join Free
+                </Link>
               </>
             )}
           </div>
 
-          {/* Mobile Hamburger */}
-          <div className="md:hidden flex items-center gap-3">
-            <motion.button
+          <div className="flex items-center gap-1 md:hidden">
+            <button
               onClick={toggleDarkMode}
-              whileTap={{ scale: 0.9 }}
-              className="text-[var(--muted-color)] p-2"
+              aria-label={themeLabel}
+              className="grid h-9 w-9 place-items-center rounded-lg text-[var(--muted-color)]"
             >
-              {prefs?.darkMode ? <FaSun /> : <FaMoon />}
-            </motion.button>
+              <ThemeIcon size={16} strokeWidth={1.75} />
+            </button>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="text-[var(--text-color)] p-2"
+              className="grid h-9 w-9 place-items-center rounded-lg text-[var(--text-color)]"
               aria-label="Toggle menu"
+              aria-expanded={mobileOpen}
             >
-              {mobileOpen ? <FaTimes /> : <FaBars />}
+              {mobileOpen ? <X size={18} strokeWidth={1.75} /> : <Menu size={18} strokeWidth={1.75} />}
             </button>
           </div>
-        </motion.div>
+        </div>
       </nav>
 
-      {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-[99] pt-24 px-6 pointer-events-auto md:hidden"
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease }}
+            className="fixed inset-x-0 top-16 bottom-0 z-[99] md:hidden"
           >
-            <div className="absolute inset-0 bg-[var(--bg-color)]/95 backdrop-blur-xl" onClick={() => setMobileOpen(false)} />
-            <div className="relative glass-panel rounded-3xl p-8 space-y-4 border border-[var(--glass-border)] shadow-2xl">
+            <div className="absolute inset-0 bg-[var(--bg-color)]" onClick={() => setMobileOpen(false)} />
+            <div className="relative space-y-1 border-b border-[var(--hairline)] px-4 pb-6 pt-2">
               {user ? (
                 <>
-                  <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[var(--glass-border)]">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center text-white text-sm font-black">
+                  <div className="mb-3 flex items-center gap-3 border-b border-[var(--hairline)] px-2 pb-4 pt-2">
+                    <span className="grid h-9 w-9 place-items-center rounded-full border border-[var(--hairline-strong)] bg-[var(--surface-2)] text-sm font-medium">
                       {userInitial}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-[var(--text-color)]">{user.email}</p>
-                      <p className="text-[9px] text-[var(--muted-color)] uppercase tracking-widest">Creator Account</p>
-                    </div>
+                    </span>
+                    <p className="truncate text-sm text-[var(--muted-color)]">{user.email}</p>
                   </div>
-                  <Link to="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-emerald-500/10 text-[var(--text-color)] font-bold text-sm transition-all">
-                    <FaColumns className="text-emerald-500" /> Dashboard
+                  <Link to="/dashboard" className="flex h-11 items-center gap-3 rounded-lg px-3 text-[15px] text-[var(--text-color)] hover:bg-[var(--surface-2)]">
+                    <LayoutGrid size={16} strokeWidth={1.75} /> Dashboard
                   </Link>
-                  <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-red-500 font-bold text-sm transition-all w-full text-left">
-                    <FaSignOutAlt /> Logout
+                  <button onClick={handleLogout} className="flex h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-[15px] text-[var(--muted-color)] hover:bg-[var(--surface-2)]">
+                    <LogOut size={16} strokeWidth={1.75} /> Logout
                   </button>
                 </>
               ) : (
                 <>
-                  <Link to="/login" className="flex items-center justify-center px-4 py-3 rounded-xl hover:bg-[var(--input-bg)] text-[var(--text-color)] font-bold text-sm transition-all">
+                  <Link to="/login" className="flex h-11 items-center rounded-lg px-3 text-[15px] text-[var(--text-color)] hover:bg-[var(--surface-2)]">
                     Login
                   </Link>
-                  <Link to="/signup" className="flex items-center justify-center px-4 py-4 rounded-xl bg-emerald-500 text-white font-black text-sm transition-all shadow-lg">
+                  <Link to="/signup" className="mt-2 flex h-11 items-center justify-center rounded-lg bg-[var(--text-color)] text-[15px] font-medium text-[var(--bg-color)]">
                     Join Free
                   </Link>
                 </>

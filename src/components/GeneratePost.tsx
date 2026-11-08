@@ -304,7 +304,7 @@ const GeneratePost: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-panel p-7 rounded-[2rem] border-[var(--glass-border)] shadow-2xl"
+          className="bg-[var(--surface)] p-7 rounded-2xl border-[var(--hairline)] "
         >
           <ModelSelector
             selectedModel={prefs.selectedModel}
@@ -330,38 +330,37 @@ const GeneratePost: React.FC = () => {
           {/* Launch Brief */}
           <motion.div
             layout
-            className="mb-6 overflow-hidden rounded-2xl border border-[var(--input-border)] bg-[var(--input-bg)]/70 p-4"
+            className="mb-6 overflow-hidden rounded-2xl border border-[var(--input-border)] bg-input-bg/70 p-4"
           >
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.28em] text-emerald-500">Launch Brief</p>
-                <h4 className="mt-1 font-display text-sm font-black uppercase tracking-widest text-[var(--text-color)]">
+                <p className="text-xs font-medium text-accent">Launch brief</p>
+                <h4 className="mt-1 font-display text-sm font-medium text-[var(--text-color)]">
                   {readiness.label}
                 </h4>
               </div>
-              <div className="relative h-12 w-12 shrink-0 rounded-2xl bg-black/10 p-1 dark:bg-white/5">
+              <div className="relative h-12 w-12 shrink-0 rounded-full p-0.5">
                 <svg viewBox="0 0 42 42" className="h-full w-full -rotate-90">
-                  <circle cx="21" cy="21" r="17" fill="none" stroke="rgba(148,163,184,.22)" strokeWidth="4" />
+                  <circle cx="21" cy="21" r="17" fill="none" stroke="var(--hairline-strong)" strokeWidth="4" />
                   <motion.circle
-                    cx="21" cy="21" r="17" fill="none" stroke="url(#readinessGradient)" strokeWidth="4" strokeLinecap="round"
+                    cx="21" cy="21" r="17" fill="none" stroke="var(--accent-primary)" strokeWidth="4" strokeLinecap="round"
                     strokeDasharray="106.8" animate={{ strokeDashoffset: 106.8 - (readiness.score / 100) * 106.8 }}
                   />
-                  <defs><linearGradient id="readinessGradient"><stop stopColor="#10b981" /><stop offset="1" stopColor="#06b6d4" /></linearGradient></defs>
                 </svg>
-                <span className="absolute inset-0 grid place-items-center text-[10px] font-black text-[var(--text-color)]">{readiness.score}</span>
+                <span className="absolute inset-0 grid place-items-center text-xs font-medium text-[var(--text-color)]">{readiness.score}</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-[10px]">
+            <div className="grid grid-cols-2 gap-2 text-xs">
               {[
                 ['Platform rule', intelligence.limit],
                 ['Goal', intelligence.primaryGoal],
                 ['Pattern', intelligence.winningPattern],
                 ['Visual cue', intelligence.visualCue],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-xl border border-[var(--input-border)] bg-[var(--panel-bg)]/60 p-3">
-                  <p className="mb-1 font-black uppercase tracking-widest text-[var(--muted-color)]">{label}</p>
-                  <p className="font-bold leading-snug text-[var(--text-color)]">{value}</p>
+                <div key={label} className="rounded-xl border border-[var(--input-border)] bg-panel-bg/60 p-3">
+                  <p className="mb-1 font-medium text-[var(--muted-color)]">{label}</p>
+                  <p className="font-medium leading-snug text-[var(--text-color)]">{value}</p>
                 </div>
               ))}
             </div>
@@ -370,7 +369,7 @@ const GeneratePost: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setPrompt(recentPrompts[0])}
-                className="mt-3 w-full rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-emerald-500 transition hover:bg-emerald-500/15"
+                className="mt-3 w-full rounded-xl border border-accent/20 bg-accent/10 px-3 py-2 text-xs font-medium text-accent transition hover:bg-accent/15"
               >
                 Reuse last winning prompt
               </button>
@@ -384,17 +383,15 @@ const GeneratePost: React.FC = () => {
               animate={{ opacity: 1 }}
               className="mb-6"
             >
-              <p className="text-[9px] font-black text-[var(--muted-color)] uppercase tracking-widest mb-3 ml-1">
-                💡 Try a prompt
+              <p className="text-xs font-medium text-[var(--muted-color)] mb-3 ml-1">
+                Try a prompt
               </p>
               <div className="flex flex-wrap gap-2">
                 {suggestions.slice(0, 3).map((s, i) => (
                   <motion.button
                     key={i}
                     onClick={() => setPrompt(s)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="px-3 py-2 rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] text-[10px] font-medium text-[var(--muted-color)] hover:text-[var(--text-color)] hover:border-emerald-500/30 transition-all text-left leading-snug"
+                    className="px-3 py-2 rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] text-xs font-medium text-[var(--muted-color)] hover:text-[var(--text-color)] hover:border-accent/30 transition-colors text-left leading-snug"
                   >
                     {s}
                   </motion.button>
@@ -404,29 +401,25 @@ const GeneratePost: React.FC = () => {
           )}
 
           {/* Generate Button */}
-          <motion.button
+          <button
             onClick={handleGenerate}
             disabled={loading || !prompt.trim()}
-            whileHover={{ scale: loading ? 1 : 1.02 }}
-            whileTap={{ scale: loading ? 1 : 0.98 }}
-            className="w-full relative group"
+            aria-busy={loading}
+            className="flex h-12 w-full items-center justify-center gap-2.5 rounded-lg bg-[var(--text-color)] text-[15px] font-medium text-[var(--bg-color)] transition-opacity duration-150 hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <div className={`absolute -inset-0.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-2xl blur opacity-40 group-hover:opacity-100 transition duration-1000 ${loading ? 'animate-pulse' : ''}`} />
-            <div className={`relative w-full py-5 bg-[var(--panel-bg)] rounded-2xl font-black text-[var(--text-color)] group-hover:text-white flex items-center justify-center space-x-3 transition-all duration-300 ${loading ? 'opacity-50 cursor-not-allowed' : 'group-hover:bg-transparent'}`}>
-              {loading ? (
-                <div className="flex items-center space-x-3">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span className="font-display">GENERATING...</span>
-                  <span className="font-mono text-xs opacity-70">{(genTimer / 1000).toFixed(1)}s</span>
-                </div>
-              ) : (
-                <>
-                  <FaMagic className="text-xl" />
-                  <span className="font-display">GENERATE</span>
-                </>
-              )}
-            </div>
-          </motion.button>
+            {loading ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                <span>Generating…</span>
+                <span className="font-mono text-xs tabular-nums opacity-70">{(genTimer / 1000).toFixed(1)}s</span>
+              </>
+            ) : (
+              <>
+                <FaMagic className="text-sm" />
+                <span>Generate</span>
+              </>
+            )}
+          </button>
 
           {/* Generate More Variants */}
           {result && !loading && (
@@ -434,10 +427,10 @@ const GeneratePost: React.FC = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               onClick={handleGenerateMore}
-              className="w-full mt-3 py-3 rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] text-[var(--muted-color)] hover:text-[var(--text-color)] hover:border-emerald-500/30 transition-all flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest"
+              className="w-full mt-3 py-3 rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] text-[var(--muted-color)] hover:text-[var(--text-color)] hover:border-accent/30 transition-colors flex items-center justify-center gap-2 text-xs font-medium "
             >
-              <FaBolt className="text-emerald-500" />
-              GENERATE 3 VARIANTS
+              <FaBolt className="text-accent" />
+              Generate 3 variants
             </motion.button>
           )}
         </motion.div>

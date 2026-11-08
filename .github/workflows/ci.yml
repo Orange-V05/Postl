@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  frontend:
+    name: Frontend Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read .nvmrc
+        id: nvmrc
+        run: echo "version=$(cat .nvmrc)" >> $GITHUB_OUTPUT
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.nvmrc.outputs.version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check + Vite build
+        run: npm run build
+        env:
+          # Provide safe dummy values so Vite doesn't error on missing required vars.
+          # Real values must be configured in Vercel; this is only for CI build validation.
+          VITE_FIREBASE_API_KEY: ci-placeholder-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: ci-placeholder.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: ci-placeholder
+          VITE_FIREBASE_STORAGE_BUCKET: ci-placeholder.appspot.com
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+          VITE_FIREBASE_APP_ID: 1:000000000000:web:ci-placeholder
+          VITE_API_BASE_URL: https://ci-placeholder.onrender.com/api
+
+      - name: Unit tests
+        run: npm run test:unit
+
+  backend:
+    name: Backend Syntax & Smoke Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read .nvmrc
+        id: nvmrc
+        run: echo "version=$(cat ../.nvmrc)" >> $GITHUB_OUTPUT
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.nvmrc.outputs.version }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Backend build (syntax check + smoke import)
+        run: npm run build
+        env:
+          NODE_ENV: test
+          PORT: "4000"
+          ALLOWED_ORIGINS: "http://localhost:5173"
+          AI_PRIMARY_PROVIDER: openrouter
+          OPENROUTER_API_KEY: ci-placeholder

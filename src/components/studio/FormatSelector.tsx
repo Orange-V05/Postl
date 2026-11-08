@@ -23,7 +23,7 @@ interface ContentTypeSelectorProps {
 const ContentTypeSelector: React.FC<ContentTypeSelectorProps> = ({ contentType, setContentType }) => {
   return (
     <div>
-      <label className="block text-[10px] font-black text-[var(--muted-color)] uppercase tracking-widest mb-4 ml-1">
+      <label className="block text-xs font-medium text-[var(--muted-color)] mb-4 ml-1">
         Content Type
       </label>
       <div className="flex flex-wrap gap-2">
@@ -31,15 +31,13 @@ const ContentTypeSelector: React.FC<ContentTypeSelectorProps> = ({ contentType, 
           <motion.button
             key={ct.id}
             onClick={() => setContentType(ct.id)}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors border ${
               contentType === ct.id
-                ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 shadow-lg shadow-emerald-500/10'
-                : 'bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--muted-color)] hover:bg-[var(--input-border)]/50'
+                ? 'bg-accent/20 border-accent/50 text-accent  '
+                : 'bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--muted-color)] hover:bg-input-border/50'
             }`}
           >
-            <span className={`text-sm ${contentType === ct.id ? 'text-emerald-500' : 'text-[var(--muted-color)]'}`}>{ct.icon}</span>
+            <span className={`text-sm ${contentType === ct.id ? 'text-accent' : 'text-[var(--muted-color)]'}`}>{ct.icon}</span>
             {ct.label}
           </motion.button>
         ))}

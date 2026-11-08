@@ -31,7 +31,7 @@ interface PlatformSelectorProps {
 const PlatformSelector: React.FC<PlatformSelectorProps> = ({ platform, setPlatform }) => {
   return (
     <div className="mb-6">
-      <label className="block text-[10px] font-black text-[var(--muted-color)] uppercase tracking-widest mb-3 ml-1">
+      <label className="block text-xs font-medium text-[var(--muted-color)] mb-3 ml-1">
         Target Platform
       </label>
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -41,11 +41,9 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({ platform, setPlatfo
             <motion.button
               key={p.id}
               onClick={() => setPlatform(p.id)}
-              whileHover={{ scale: 1.04, y: -2 }}
-              whileTap={{ scale: 0.96 }}
-              className={`relative flex flex-col items-center gap-1.5 p-3 rounded-2xl text-center transition-all border overflow-hidden ${
+              className={`relative flex flex-col items-center gap-1.5 p-3 rounded-2xl text-center transition-colors border overflow-hidden ${
                 isActive
-                  ? 'border-opacity-60 shadow-lg'
+                  ? 'border-opacity-60 '
                   : 'bg-[var(--input-bg)] border-[var(--input-border)] hover:border-opacity-40'
               }`}
               style={isActive ? {
@@ -71,12 +69,12 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({ platform, setPlatfo
                 />
               )}
               <span
-                className={`relative z-10 text-lg transition-all ${isActive ? 'scale-110' : ''}`}
+                className={`relative z-10 text-lg transition-colors ${isActive ? '' : ''}`}
                 style={{ color: isActive ? p.color : 'var(--muted-color)' }}
               >
                 {p.icon}
               </span>
-              <span className={`relative z-10 text-[8px] font-black uppercase tracking-wider leading-tight ${
+              <span className={`relative z-10 text-xs leading-tight ${
                 isActive ? 'text-[var(--text-color)]' : 'text-[var(--muted-color)]'
               }`}>
                 {p.name}
@@ -86,7 +84,7 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({ platform, setPlatfo
                 <motion.span
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="relative z-10 text-[7px] font-bold opacity-60 leading-tight mt-0.5"
+                  className="relative z-10 text-[7px] font-medium opacity-60 leading-tight mt-0.5"
                   style={{ color: p.color }}
                 >
                   {p.hint}

@@ -113,12 +113,12 @@ const EngagementScore: React.FC<{ score: number }> = ({ score }) => {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-sm font-black" style={{ color }}>{score}</span>
+          <span className="text-sm font-medium" style={{ color }}>{score}</span>
         </div>
       </div>
       <div>
-        <p className="text-[8px] font-black text-[var(--muted-color)] uppercase tracking-widest mb-0.5">Engagement</p>
-        <p className="text-xs font-bold" style={{ color }}>{label}</p>
+        <p className="text-xs text-[var(--muted-color)] mb-0.5">Engagement</p>
+        <p className="text-xs font-medium" style={{ color }}>{label}</p>
       </div>
     </div>
   );
@@ -169,8 +169,8 @@ const renderFormattedContent = (text: string, category: string, fontSize: number
                 transition={{ delay: i * 0.05 }}
                 className={`script-block ${isVisual ? 'script-visual' : 'script-audio'}`}
               >
-                <span className={`text-[9px] font-black uppercase tracking-widest mb-1 block ${isVisual ? 'text-violet-400' : 'text-emerald-400'}`}>
-                  {isVisual ? '🎬 VISUAL' : '🎙️ AUDIO'}
+                <span className={`text-xs font-medium mb-1 block ${isVisual ? 'text-accent' : 'text-accent'}`}>
+                  {isVisual ? 'Visual' : 'Audio'}
                 </span>
                 <p style={{ fontSize: `${Math.min(fontSize, 20)}px` }} className="text-[var(--text-color)] leading-relaxed">
                   {cleanLine}
@@ -202,7 +202,7 @@ const renderFormattedContent = (text: string, category: string, fontSize: number
             return <h2 key={i}>{trimmed.replace('## ', '')}</h2>;
           }
           if (trimmed.startsWith('# ')) {
-            return <h2 key={i} className="!text-xl !font-bold">{trimmed.replace('# ', '')}</h2>;
+            return <h2 key={i} className="!text-xl !font-medium">{trimmed.replace('# ', '')}</h2>;
           }
           if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
             return <li key={i} className="list-disc ml-4 text-[var(--text-color)] leading-relaxed">{trimmed.replace(/^[-•]\s/, '')}</li>;
@@ -223,17 +223,17 @@ const renderFormattedContent = (text: string, category: string, fontSize: number
           const trimmed = line.trim();
           if (/^Headline:/i.test(trimmed)) {
             return (
-              <div key={i} className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Headline</span>
-                <p className="text-[var(--text-color)] font-bold text-lg mt-1">{trimmed.replace(/^Headline:\s*/i, '')}</p>
+              <div key={i} className="p-4 rounded-xl bg-accent/5 border border-accent/20">
+                <span className="text-xs font-medium text-accent">Headline</span>
+                <p className="text-[var(--text-color)] font-medium text-lg mt-1">{trimmed.replace(/^Headline:\s*/i, '')}</p>
               </div>
             );
           }
           if (/^CTA:/i.test(trimmed)) {
             return (
               <div key={i} className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
-                <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">Call to Action</span>
-                <p className="text-[var(--text-color)] font-bold mt-1">{trimmed.replace(/^CTA:\s*/i, '')}</p>
+                <span className="text-xs font-medium text-amber-500">Call to Action</span>
+                <p className="text-[var(--text-color)] font-medium mt-1">{trimmed.replace(/^CTA:\s*/i, '')}</p>
               </div>
             );
           }
@@ -250,7 +250,7 @@ const renderFormattedContent = (text: string, category: string, fontSize: number
   return (
     <p
       style={{ fontSize: `${Math.min(fontSize, 36)}px` }}
-      className="font-display font-bold text-[var(--text-color)] leading-snug drop-shadow-2xl transition-all duration-300 whitespace-pre-wrap"
+      className="font-display font-medium text-[var(--text-color)] leading-snug drop-shadow-2xl transition-colors duration-300 whitespace-pre-wrap"
     >
       {text}
     </p>
@@ -263,112 +263,49 @@ const PostResultView: React.FC<PostResultViewProps> = ({
   strategyBrief, onRegenerate, loading, elapsedMs, meta
 }) => {
   const [activeVariant, setActiveVariant] = useState(0);
-  const [isDark, setIsDark] = useState(false);
   const variants = allVariants && allVariants.length > 0 ? allVariants : (result ? [result] : []);
   const currentText = variants[activeVariant] || result || '';
   const { displayed, isTyping } = useTypewriter(currentText);
   const contentStats = analyzeContent(currentText);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-    const syncTheme = () => setIsDark(document.documentElement.classList.contains('dark') || Boolean(media?.matches));
-    syncTheme();
-
-    const observer = new MutationObserver(syncTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
-    media?.addEventListener?.('change', syncTheme);
-    return () => {
-      observer.disconnect();
-      media?.removeEventListener?.('change', syncTheme);
-    };
-  }, []);
 
   // Reset active variant on new results
   useEffect(() => {
     setActiveVariant(0);
   }, [result]);
 
-  const paletteByPlatform: Record<string, { from: string; via: string; to: string; accent: string; glow: string }> = {
-    twitter: { from: '#7c3aed', via: '#06b6d4', to: '#10b981', accent: '#d8b4fe', glow: 'rgba(167,139,250,0.28)' },
-    instagram: { from: '#ec4899', via: '#f59e0b', to: '#8b5cf6', accent: '#fbcfe8', glow: 'rgba(244,114,182,0.28)' },
-    linkedin: { from: '#2563eb', via: '#0ea5e9', to: '#14b8a6', accent: '#bfdbfe', glow: 'rgba(59,130,246,0.25)' },
-    tiktok: { from: '#14b8a6', via: '#38bdf8', to: '#f472b6', accent: '#a7f3d0', glow: 'rgba(20,184,166,0.28)' },
-    email: { from: '#f59e0b', via: '#fb7185', to: '#ef4444', accent: '#fde68a', glow: 'rgba(245,158,11,0.26)' },
-    blog: { from: '#8b5cf6', via: '#6366f1', to: '#22d3ee', accent: '#ddd6fe', glow: 'rgba(139,92,246,0.24)' },
-    ad: { from: '#f43f5e', via: '#fb7185', to: '#f59e0b', accent: '#fecdd3', glow: 'rgba(244,63,94,0.25)' },
-  };
-
-  const artPalette = paletteByPlatform[platform] || paletteByPlatform.twitter;
-  const artTitle = `${platformLabels[platform] || 'Campaign'} concept`;
-
   return (
     <AnimatePresence mode="wait">
       {result ? (
         <motion.div
           key="result"
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 1.05, filter: "blur(20px)" }}
-          transition={{ type: "spring", stiffness: 100, damping: 20 }}
-          className="glass-panel glass-inner-border overflow-hidden rounded-[2.5rem] border border-[var(--glass-border)] shadow-2xl flex flex-col relative group/result"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="relative flex flex-col overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--surface)]"
         >
-          {/* Background Visual */}
-          <div className="absolute inset-0 z-0">
-            <motion.div
-              initial={{ scale: 1.15, opacity: 0.5 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 1.2, ease: 'easeOut' }}
-              className="absolute inset-0"
-              style={{
-                background: `radial-gradient(circle at 20% 20%, ${artPalette.accent} 0%, transparent 22%), radial-gradient(circle at 80% 0%, ${artPalette.to} 0%, transparent 30%), linear-gradient(135deg, ${isDark ? '#09090b' : '#fffaf6'} 0%, ${artPalette.from} 30%, ${artPalette.via} 60%, ${artPalette.to} 100%)`,
-              }}
-            />
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 30, ease: 'linear', repeat: Infinity }}
-              className="absolute -right-16 -top-12 h-64 w-64 rounded-full border border-white/15"
-              style={{ boxShadow: `0 0 80px ${artPalette.glow}` }}
-            />
-            <motion.div
-              animate={{ rotate: -360 }}
-              transition={{ duration: 40, ease: 'linear', repeat: Infinity }}
-              className="absolute -left-12 bottom-0 h-56 w-56 rounded-full border border-white/15"
-              style={{ boxShadow: `0 0 80px ${artPalette.glow}` }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-tr from-[var(--bg-color)] via-[var(--bg-color)]/90 to-[var(--bg-color)]/25" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.18),transparent_35%)]" />
-            <div className="absolute inset-x-8 top-8 flex items-center justify-between rounded-full border border-white/15 bg-white/5 px-4 py-2 backdrop-blur-sm text-[9px] font-black uppercase tracking-[0.25em] text-white/85">
-              <span>{artTitle}</span>
-              <span className="text-[10px]">•</span>
-              <span>{category}</span>
-            </div>
-          </div>
-
           {/* Content */}
           <div className="relative z-10 flex flex-col p-8 lg:p-12">
             {/* Header */}
             <div className="flex justify-between items-start mb-8">
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em]">
+                <span className="rounded-md border border-[var(--hairline-strong)] px-2 py-1 text-xs text-[var(--text-color)]">
                   {platformLabels[platform] || platform}
                 </span>
-                <span className="text-[var(--muted-color)]/30 text-xs font-black">/</span>
-                <span className="text-[var(--muted-color)] text-[9px] font-black uppercase tracking-widest">{category}</span>
+                <span className="text-muted/30 text-xs font-medium">/</span>
+                <span className="text-[var(--muted-color)] text-xs font-medium">{category}</span>
                 {meta?.engine && (
                   <>
-                    <span className="text-[var(--muted-color)]/30 text-xs font-black">/</span>
-                    <span className="px-2 py-1 rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] text-[8px] font-mono font-bold text-[var(--muted-color)] uppercase">
-                      {meta.engine === 'cloud' ? '☁️ Cloud' : '🖥️ Local'}
+                    <span className="text-muted/30 text-xs font-medium">/</span>
+                    <span className="px-2 py-1 rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] text-xs font-mono text-[var(--muted-color)]">
+                      {meta.engine === 'cloud' ? 'Cloud' : 'Local'}
                     </span>
                   </>
                 )}
               </div>
               <div className="flex items-center gap-2">
                 {elapsedMs && (
-                  <span className="text-[9px] font-mono font-bold text-[var(--muted-color)] bg-[var(--input-bg)] border border-[var(--input-border)] px-2.5 py-1.5 rounded-lg">
+                  <span className="text-xs font-mono font-medium text-[var(--muted-color)] bg-[var(--input-bg)] border border-[var(--input-border)] px-2.5 py-1.5 rounded-lg">
                     {(elapsedMs / 1000).toFixed(1)}s
                   </span>
                 )}
@@ -376,9 +313,8 @@ const PostResultView: React.FC<PostResultViewProps> = ({
                   <motion.button
                     onClick={onRegenerate}
                     disabled={loading}
-                    whileHover={{ rotate: 180 }}
                     transition={{ duration: 0.4 }}
-                    className="p-2.5 bg-[var(--input-bg)] backdrop-blur-md rounded-xl hover:bg-emerald-500 hover:text-white text-[var(--muted-color)] transition-all border border-[var(--input-border)]"
+                    className="grid h-9 w-9 place-items-center rounded-lg text-[var(--muted-color)] transition-colors duration-150 hover:text-[var(--text-color)] border border-[var(--hairline-strong)]"
                     title="Regenerate"
                   >
                     <FaRedo className={loading ? 'animate-spin' : ''} size={12} />
@@ -386,14 +322,14 @@ const PostResultView: React.FC<PostResultViewProps> = ({
                 )}
                 <button
                   onClick={handleCopy}
-                  className="p-2.5 bg-[var(--input-bg)] backdrop-blur-md rounded-xl hover:bg-emerald-500 hover:text-white text-emerald-500 dark:text-emerald-400 transition-all border border-[var(--input-border)] group/copy"
+                  className="grid h-9 w-9 place-items-center rounded-lg text-[var(--muted-color)] transition-colors duration-150 hover:text-[var(--text-color)] border border-[var(--hairline-strong)]"
                   title="Copy to Clipboard"
                 >
-                  {copied ? <FaCheck size={12} /> : <FaRegCopy size={12} className="group-hover/copy:rotate-12 transition-transform" />}
+                  {copied ? <FaCheck size={12} /> : <FaRegCopy size={12} />}
                 </button>
                 <button
                   onClick={() => downloadMarkdown(currentText, platform, category)}
-                  className="p-2.5 bg-[var(--input-bg)] backdrop-blur-md rounded-xl hover:bg-cyan-500 hover:text-white text-cyan-500 transition-all border border-[var(--input-border)]"
+                  className="grid h-9 w-9 place-items-center rounded-lg text-[var(--muted-color)] transition-colors duration-150 hover:text-[var(--text-color)] border border-[var(--hairline-strong)]"
                   title="Export Markdown"
                 >
                   <FaDownload size={12} />
@@ -413,9 +349,9 @@ const PostResultView: React.FC<PostResultViewProps> = ({
                   ['Hashtags', contentStats.hashtags.toString()],
                   ['Read', `${contentStats.readMinutes} min`],
                 ].map(([label, value]) => (
-                  <div key={label} className="magnetic-sheen rounded-2xl border border-[var(--input-border)] p-3">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-[var(--muted-color)]">{label}</p>
-                    <p className="mt-1 font-display text-lg font-black text-[var(--text-color)]">{value}</p>
+                  <div key={label} className="rounded-lg border border-[var(--hairline)] p-3">
+                    <p className="text-xs text-[var(--faint-color)]">{label}</p>
+                    <p className="mt-1 text-lg font-medium tabular-nums text-[var(--text-color)]">{value}</p>
                   </div>
                 ))}
               </motion.div>
@@ -427,7 +363,7 @@ const PostResultView: React.FC<PostResultViewProps> = ({
                 <button
                   onClick={() => setActiveVariant(Math.max(0, activeVariant - 1))}
                   disabled={activeVariant === 0}
-                  className="p-1.5 rounded-lg text-[var(--muted-color)] hover:text-[var(--text-color)] disabled:opacity-30 transition-all"
+                  className="p-1.5 rounded-lg text-[var(--muted-color)] hover:text-[var(--text-color)] disabled:opacity-30 transition-colors"
                 >
                   <FaChevronLeft size={10} />
                 </button>
@@ -443,11 +379,11 @@ const PostResultView: React.FC<PostResultViewProps> = ({
                 <button
                   onClick={() => setActiveVariant(Math.min(variants.length - 1, activeVariant + 1))}
                   disabled={activeVariant === variants.length - 1}
-                  className="p-1.5 rounded-lg text-[var(--muted-color)] hover:text-[var(--text-color)] disabled:opacity-30 transition-all"
+                  className="p-1.5 rounded-lg text-[var(--muted-color)] hover:text-[var(--text-color)] disabled:opacity-30 transition-colors"
                 >
                   <FaChevronRight size={10} />
                 </button>
-                <span className="text-[9px] font-black text-[var(--muted-color)] uppercase tracking-widest ml-2">
+                <span className="text-xs font-medium text-[var(--muted-color)] ml-2">
                   Variant {activeVariant + 1} of {variants.length}
                 </span>
               </div>
@@ -456,11 +392,11 @@ const PostResultView: React.FC<PostResultViewProps> = ({
             {/* Main Content */}
             <div className="flex-grow flex flex-col justify-center mb-8 overflow-y-auto max-h-[55vh] pr-2 scrollbar-thin scrollbar-thumb-[var(--glass-border)] scrollbar-track-transparent">
               <blockquote className="relative">
-                <span className="absolute -top-6 -left-2 text-emerald-500/10 text-6xl font-serif select-none">"</span>
+                <span className="absolute -top-6 -left-2 text-accent/10 text-6xl font-serif select-none">"</span>
                 <div className={isTyping ? 'typewriter-cursor' : ''}>
                   {renderFormattedContent(displayed, category, fontSize)}
                 </div>
-                <span className="absolute -bottom-8 -right-2 text-emerald-500/10 text-6xl font-serif rotate-180 select-none">"</span>
+                <span className="absolute -bottom-8 -right-2 text-accent/10 text-6xl font-serif rotate-180 select-none">"</span>
               </blockquote>
             </div>
 
@@ -479,8 +415,8 @@ const PostResultView: React.FC<PostResultViewProps> = ({
                   )}
                   {strategyBrief.charCount !== undefined && strategyBrief.maxChars && (
                     <div className="text-right">
-                      <p className="text-[8px] font-black text-[var(--muted-color)] uppercase tracking-widest mb-1">Characters</p>
-                      <p className={`font-mono font-bold text-sm ${strategyBrief.charCount > strategyBrief.maxChars ? 'text-red-500' : 'text-emerald-500'}`}>
+                      <p className="text-xs text-[var(--muted-color)] mb-1">Characters</p>
+                      <p className={`font-mono font-medium text-sm ${strategyBrief.charCount > strategyBrief.maxChars ? 'text-danger' : 'text-accent'}`}>
                         {strategyBrief.charCount}
                         <span className="text-[var(--muted-color)]"> / {strategyBrief.maxChars}</span>
                       </p>
@@ -492,36 +428,36 @@ const PostResultView: React.FC<PostResultViewProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                   {strategyBrief.bestTime && (
                     <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-[var(--input-bg)] border border-[var(--input-border)]">
-                      <FaClock className="text-emerald-500 mt-0.5 flex-shrink-0" size={12} />
+                      <FaClock className="text-accent mt-0.5 flex-shrink-0" size={12} />
                       <div>
-                        <p className="text-[8px] font-black text-[var(--muted-color)] uppercase tracking-widest mb-1">Best Time</p>
+                        <p className="text-xs text-[var(--muted-color)] mb-1">Best Time</p>
                         <p className="text-[var(--text-color)] text-xs font-medium">{strategyBrief.bestTime}</p>
                       </div>
                     </div>
                   )}
                   {strategyBrief.hashtags && (
                     <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-[var(--input-bg)] border border-[var(--input-border)]">
-                      <FaHashtag className="text-emerald-500 mt-0.5 flex-shrink-0" size={12} />
+                      <FaHashtag className="text-accent mt-0.5 flex-shrink-0" size={12} />
                       <div>
-                        <p className="text-[8px] font-black text-[var(--muted-color)] uppercase tracking-widest mb-1">Hashtags</p>
+                        <p className="text-xs text-[var(--muted-color)] mb-1">Hashtags</p>
                         <p className="text-[var(--text-color)] text-xs font-medium line-clamp-2">{strategyBrief.hashtags}</p>
                       </div>
                     </div>
                   )}
                   {strategyBrief.framework && (
                     <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-[var(--input-bg)] border border-[var(--input-border)]">
-                      <FaLayerGroup className="text-emerald-500 mt-0.5 flex-shrink-0" size={12} />
+                      <FaLayerGroup className="text-accent mt-0.5 flex-shrink-0" size={12} />
                       <div>
-                        <p className="text-[8px] font-black text-[var(--muted-color)] uppercase tracking-widest mb-1">Framework</p>
+                        <p className="text-xs text-[var(--muted-color)] mb-1">Framework</p>
                         <p className="text-[var(--text-color)] text-xs font-medium">{strategyBrief.framework}</p>
                       </div>
                     </div>
                   )}
                   {strategyBrief.tip && (
-                    <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-emerald-500/5 border border-emerald-500/15">
-                      <FaLightbulb className="text-emerald-500 mt-0.5 flex-shrink-0" size={12} />
+                    <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-accent/5 border border-accent/15">
+                      <FaLightbulb className="text-accent mt-0.5 flex-shrink-0" size={12} />
                       <div>
-                        <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-1">Pro Tip</p>
+                        <p className="text-xs text-accent mb-1">Pro Tip</p>
                         <p className="text-[var(--text-color)] text-xs font-medium">{strategyBrief.tip}</p>
                       </div>
                     </div>
@@ -533,23 +469,23 @@ const PostResultView: React.FC<PostResultViewProps> = ({
             {/* Footer Controls */}
             <div className="pt-5 border-t border-[var(--input-border)] flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <p className="text-[10px] font-black text-[var(--muted-color)] uppercase tracking-widest opacity-60">
-                  {feedbackStatus === 'submitted' ? "✓ FEEDBACK RECORDED" : "Quality check"}
+                <p className="text-xs text-[var(--muted-color)]">
+                  {feedbackStatus === 'submitted' ? "Thanks for the feedback" : "Was this useful?"}
                 </p>
                 {feedbackStatus !== 'submitted' && (
                   <div className="flex gap-2">
-                    <button onClick={() => handleFeedback('helpful')} className="px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/10">👍 YES</button>
-                    <button onClick={() => handleFeedback('unhelpful')} className="px-4 py-2 rounded-xl bg-red-500/10 text-red-500 text-[10px] font-black hover:bg-red-500 hover:text-white transition-all border border-red-500/10">👎 NO</button>
+                    <button onClick={() => handleFeedback('helpful')} className="h-8 rounded-lg border border-[var(--hairline-strong)] px-3 text-xs text-[var(--muted-color)] transition-colors duration-150 hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)]">Yes</button>
+                    <button onClick={() => handleFeedback('unhelpful')} className="h-8 rounded-lg border border-[var(--hairline-strong)] px-3 text-xs text-[var(--muted-color)] transition-colors duration-150 hover:border-[var(--danger)] hover:text-[var(--danger)]">No</button>
                   </div>
                 )}
               </div>
 
               <button
                 onClick={handleCopy}
-                className="flex items-center justify-center gap-2.5 px-5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all"
+                className="flex h-9 items-center justify-center gap-2 rounded-lg bg-[var(--text-color)] px-4 text-sm font-medium text-[var(--bg-color)] transition-opacity duration-150 hover:opacity-85"
               >
                 {copied ? <FaCheck /> : <FaRegCopy />}
-                {copied ? "COPIED!" : "COPY CONTENT"}
+                {copied ? "Copied" : "Copy"}
               </button>
             </div>
           </div>
@@ -559,38 +495,16 @@ const PostResultView: React.FC<PostResultViewProps> = ({
           key="empty"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="h-full min-h-[500px] border-2 border-dashed border-[var(--glass-border)] rounded-[2.5rem] flex flex-col items-center justify-center text-center p-10 group hover:border-emerald-500/20 transition-all bg-[var(--panel-bg)] backdrop-blur-sm relative overflow-hidden"
+          className="h-full min-h-[500px] border border-dashed border-[var(--hairline-strong)] rounded-2xl flex flex-col items-center justify-center text-center p-10 relative overflow-hidden"
         >
-          {/* Shimmer decoration */}
-          <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-emerald-500/5 rounded-full blur-[60px] animate-float" />
-          <div className="absolute bottom-1/4 right-1/4 w-24 h-24 bg-cyan-500/5 rounded-full blur-[50px] animate-float" style={{ animationDelay: '2s' }} />
-          
-          <motion.div
-            animate={{
-              y: [0, -10, 0],
-              filter: ["drop-shadow(0 0 0px transparent)", "drop-shadow(0 0 20px #10b98144)", "drop-shadow(0 0 0px transparent)"]
-            }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="w-20 h-20 rounded-3xl bg-[var(--input-bg)] border border-[var(--input-border)] flex items-center justify-center mb-8 group-hover:bg-emerald-500/10 transition-colors"
-          >
-            <FaMagic className="text-3xl text-[var(--muted-color)] group-hover:text-emerald-500 transition-colors" />
-          </motion.div>
-          <h3 className="font-display text-[var(--text-color)] font-bold uppercase tracking-[0.3em] text-sm mb-4">
-            READY FOR ORCHESTRATION
-          </h3>
-          <p className="text-[var(--muted-color)] text-xs max-w-[300px] leading-relaxed mb-8">
-            Select your platform, content type, and tone — then describe your vision. The engine handles the rest.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <div className="px-4 py-2 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex items-center gap-2">
-              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">TIP</span>
-              <span className="text-[10px] font-bold text-[var(--muted-color)]">Try "Witty" tone for peak engagement</span>
-            </div>
-            <div className="px-4 py-2 rounded-xl bg-cyan-500/5 border border-cyan-500/10 flex items-center gap-2">
-              <span className="text-[10px] font-black text-cyan-500 uppercase tracking-widest">NEW</span>
-              <span className="text-[10px] font-bold text-[var(--muted-color)]">Multi-variant generation</span>
-            </div>
+          <div className="mb-6 grid h-12 w-12 place-items-center rounded-xl border border-[var(--hairline-strong)] bg-[var(--surface)]">
+            <FaMagic className="text-base text-[var(--faint-color)]" />
           </div>
+          <h3 className="text-[15px] font-medium text-[var(--text-color)]">Your draft will appear here</h3>
+          <p className="mt-2 max-w-[300px] text-sm leading-relaxed text-[var(--muted-color)]">
+            Pick a platform, format and tone, then describe what you want to say.
+          </p>
+          <p className="mt-6 text-xs text-[var(--faint-color)]">Tip: ask for several variants and keep the best one.</p>
         </motion.div>
       )}
     </AnimatePresence>

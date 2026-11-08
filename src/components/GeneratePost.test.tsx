@@ -19,6 +19,6 @@ describe('GeneratePost', () => {
     render(<AuthContext.Provider value={{ user: { uid: 'u1' } as any, loading: false, login: vi.fn(), logout: vi.fn(), getToken: vi.fn(async () => 'token') }}><GeneratePost /></AuthContext.Provider>);
     expect(await screen.findByText('AI Engine')).toBeInTheDocument();
     expect(screen.getByText('Target Platform')).toBeInTheDocument();
-    expect(screen.getByText('GENERATE')).toBeInTheDocument();
+    expect(screen.getByText('Generate')).toBeInTheDocument();
   });
 });

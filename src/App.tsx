@@ -3,7 +3,6 @@ import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import PrivateRoute from './components/PrivateRoute';
 import { useStore } from './store/useStore';
-import GooeyBackground from './components/GooeyBackground';
 import { AuthContext } from './context/AuthContext';
 import { apiConfigError } from './api/client';
 
@@ -13,11 +12,10 @@ const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Signup = React.lazy(() => import('./pages/Signup'));
 
 const AppLoader = () => (
-  <div className="grid min-h-screen place-items-center px-6 pt-24">
-    <div className="premium-card w-full max-w-sm rounded-[2rem] p-8 text-center">
-      <div className="mx-auto mb-5 h-14 w-14 animate-pulse rounded-2xl bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 shadow-2xl shadow-emerald-500/25" />
-      <p className="font-display text-sm font-black uppercase tracking-[0.35em] text-[var(--text-color)]">Booting POSTL</p>
-      <p className="mt-2 text-xs font-medium text-[var(--muted-color)]">Loading the creator command center...</p>
+  <div className="grid min-h-screen place-items-center px-6" role="status" aria-live="polite">
+    <div className="flex items-center gap-3 text-sm text-[var(--muted-color)]">
+      <span className="h-4 w-4 rounded-full border-2 border-[var(--hairline-strong)] border-t-[var(--accent-primary)] animate-spin" />
+      Loading
     </div>
   </div>
 );
@@ -28,19 +26,18 @@ function App() {
   const { prefs } = store;
 
   return (
-    <div className={`${prefs?.darkMode ? 'dark' : 'light'} min-h-screen text-[var(--text-color)] transition-colors duration-500`}>
-      <GooeyBackground />
+    <div className={`${prefs?.darkMode ? 'dark' : 'light'} min-h-screen bg-[var(--bg-color)] text-[var(--text-color)]`}>
       <Navbar />
       {auth?.configError && (
-        <div role="alert" className="relative z-50 mx-auto mt-24 w-[min(92vw,920px)] rounded-2xl border border-amber-400/40 bg-amber-500/10 px-5 py-4 text-sm font-semibold text-amber-100 shadow-2xl shadow-amber-500/10">
-          <span className="font-black uppercase tracking-widest text-amber-300">Deployment configuration required:</span>{' '}
-          Firebase environment variables are missing on this deployment. Public pages are available, but login, signup, dashboard persistence, and generation are disabled until Vercel `VITE_FIREBASE_*` variables are configured and redeployed.
+        <div role="alert" className="relative z-50 mx-auto mt-24 w-[min(92vw,920px)] rounded-xl border border-[var(--hairline-strong)] bg-[var(--surface)] px-5 py-4 text-sm leading-relaxed text-[var(--muted-color)]">
+          <span className="font-medium text-[var(--accent-warm)]">Deployment configuration required.</span>{' '}
+          Firebase environment variables are missing on this deployment. Public pages are available, but login, signup, dashboard persistence, and generation are disabled until Vercel <code className="font-mono text-[var(--text-color)]">VITE_FIREBASE_*</code> variables are configured and redeployed.
         </div>
       )}
       {apiConfigError && (
-        <div role="status" className="relative z-50 mx-auto mt-4 w-[min(92vw,920px)] rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-5 py-4 text-sm font-semibold text-cyan-100 shadow-2xl shadow-cyan-500/10">
-          <span className="font-black uppercase tracking-widest text-cyan-300">Backend API not configured:</span>{' '}
-          Generation and repurposing need a persistent backend. Set `VITE_API_BASE_URL` in Vercel to the deployed backend URL and redeploy.
+        <div role="status" className="relative z-50 mx-auto mt-4 w-[min(92vw,920px)] rounded-xl border border-[var(--hairline-strong)] bg-[var(--surface)] px-5 py-4 text-sm leading-relaxed text-[var(--muted-color)]">
+          <span className="font-medium text-[var(--text-color)]">Backend API not configured.</span>{' '}
+          Generation and repurposing need a persistent backend. Set <code className="font-mono text-[var(--text-color)]">VITE_API_BASE_URL</code> in Vercel to the deployed backend URL and redeploy.
         </div>
       )}
       <Suspense fallback={<AppLoader />}>

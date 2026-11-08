@@ -1,4 +1,4 @@
-﻿import { validateApiBaseUrl } from '../config/apiConfig';
+import { validateApiBaseUrl } from '../config/apiConfig';
 
 export interface ApiEnvelope<T> {
   data: T | null;
@@ -114,4 +114,26 @@ export function generatePost(token: string | null, body: Record<string, unknown>
 
 export function getModels() {
   return apiRequest<{ models: Array<{ id: string; label: string; capabilities: string[]; local: boolean; privacy?: string; provider?: string }>; platforms: Record<string, { label: string; formats: string[]; maxChars: number }>; objectives: string[]; tones: string[] }>('/models');
+}
+
+export interface RepurposeAsset {
+  output: string;
+  content: string;
+  hook?: string;
+  CTA?: string;
+  hashtags?: Record<string, string[]> | null;
+  rationale?: string;
+  strategy?: { framework?: string };
+  analysis?: { score: number; label: string };
+  provider?: { name: string; model: string; latencyMs: number };
+}
+
+export interface RepurposeResponse {
+  requestId: string;
+  assets: RepurposeAsset[];
+  message?: string;
+}
+
+export function repurposeContent(token: string | null, body: Record<string, unknown>, timeoutMs = 90000) {
+  return apiRequest<RepurposeResponse>('/repurpose', { method: 'POST', token, timeoutMs, body: JSON.stringify(body) });
 }
