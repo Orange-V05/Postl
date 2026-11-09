@@ -5,6 +5,7 @@ import PrivateRoute from './components/PrivateRoute';
 import { useStore } from './store/useStore';
 import { AuthContext } from './context/AuthContext';
 import { apiConfigError } from './api/client';
+import { useMeridian } from './hooks/useMeridian';
 
 const Home = React.lazy(() => import('./pages/home'));
 const Login = React.lazy(() => import('./pages/Login'));
@@ -24,6 +25,7 @@ function App() {
   const store = useStore();
   const auth = useContext(AuthContext);
   const { prefs } = store;
+  useMeridian(!!prefs?.darkMode);
 
   return (
     <div className={`${prefs?.darkMode ? 'dark' : 'light'} relative min-h-screen bg-[var(--bg-color)] text-[var(--text-color)]`}>

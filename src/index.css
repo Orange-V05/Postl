@@ -204,6 +204,9 @@
 /* app content always sits above the mesh */
 .app-layer { position: relative; z-index: 1; }
 
+/* Meridian HUD canvas: keep its graphics out from under the 64px navbar */
+.mrd-cv { clip-path: inset(64px 0 0 0); }
+
 /* ─── Page shell ────────────────────────────────────────────────────────────── */
 .aurora-bg {
   position: relative;

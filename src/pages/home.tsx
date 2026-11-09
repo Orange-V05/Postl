@@ -250,16 +250,10 @@ const Preview: React.FC = () => {
   );
 };
 
-const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: number }> = ({ children, className, delay = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 16 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-60px" }}
-    transition={{ duration: 0.55, ease, delay }}
-    className={className}
-  >
-    {children}
-  </motion.div>
+// Scroll reveals are drawn by the Meridian engine (src/hooks/useMeridian.ts),
+// so this wrapper only groups content into one scan target.
+const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: number }> = ({ children, className }) => (
+  <div className={className}>{children}</div>
 );
 
 const headlineA = ["Write", "it"];
@@ -283,7 +277,7 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen text-[var(--text-color)]">
       {/* Hero */}
-      <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-28 sm:px-6 md:pt-36 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10">
+      <section data-meridian-ignore className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-28 sm:px-6 md:pt-36 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10">
         <div>
           <motion.p
             initial={reduce ? false : { opacity: 0 }}
@@ -353,7 +347,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Platforms ticker: three equal bands */}
-      <section className="relative overflow-hidden" aria-label="Writes for">
+      <section data-meridian-ignore className="relative overflow-hidden" aria-label="Writes for">
         <div className="grid grid-cols-3 text-sm">
           {tone.map((t) => (
             <div key={t} className={`tile-${t} h-12`} />
