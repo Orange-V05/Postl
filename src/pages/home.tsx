@@ -164,7 +164,7 @@ const Home: React.FC = () => {
           className="mx-auto max-w-2xl text-center"
         >
           <h1 className="text-4xl font-medium leading-[1.1] tracking-tight sm:text-5xl md:text-6xl">
-            Write it once.
+            Write it <span className="proof-mark">once</span>.
             <span className="block text-[var(--muted-color)]">Post it everywhere it belongs.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[var(--muted-color)] sm:text-lg">
@@ -249,7 +249,7 @@ const Home: React.FC = () => {
           <p className="mt-3 text-[var(--muted-color)]">Free to start. No card needed.</p>
           <button
             onClick={() => navigate("/signup")}
-            className="mt-8 inline-flex h-11 items-center gap-2 rounded-lg bg-[var(--accent-primary)] px-5 text-sm font-medium text-[var(--bg-color)] transition-colors duration-150 hover:bg-[var(--accent-hover)] dark:text-[#0f0f10]"
+            className="mt-8 inline-flex h-11 items-center gap-2 rounded-lg bg-[var(--accent-primary)] px-5 text-sm font-medium text-[var(--accent-contrast)] transition-colors duration-150 hover:bg-[var(--accent-hover)]"
           >
             Create an account
             <ArrowRight size={16} strokeWidth={1.75} />
@@ -261,7 +261,7 @@ const Home: React.FC = () => {
       <footer className="border-t border-[var(--hairline)]">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-8 text-sm text-[var(--faint-color)] sm:px-6">
           <div className="flex items-center gap-2.5">
-            <span className="grid h-6 w-6 place-items-center rounded-md bg-[var(--text-color)] font-mono text-xs font-medium text-[var(--bg-color)]">P</span>
+            <span className="grid h-6 w-6 place-items-center rounded-md bg-[var(--accent-primary)] font-mono text-xs font-medium text-[var(--accent-contrast)]">P</span>
             <span className="text-[var(--text-color)]">POSTL</span>
           </div>
           <span>Made by Vardaan</span>

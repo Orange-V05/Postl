@@ -36,11 +36,11 @@ const empty: Campaign = {
 };
 
 const statusConfig: Record<CampaignStatus, { label: string; color: string; bg: string; border: string }> = {
-  draft:     { label: 'Draft',     color: 'text-slate-400',   bg: 'bg-slate-500/10',   border: 'border-slate-500/20' },
+  draft:     { label: 'Draft',     color: 'text-muted',       bg: 'bg-surface-2',      border: 'border-hairline-strong' },
   active:    { label: 'Active',    color: 'text-accent', bg: 'bg-accent/10', border: 'border-accent/20' },
-  paused:    { label: 'Paused',    color: 'text-amber-500',   bg: 'bg-amber-500/10',   border: 'border-amber-500/20' },
+  paused:    { label: 'Paused',    color: 'text-warm',   bg: 'bg-warm/10',   border: 'border-warm/20' },
   completed: { label: 'Completed', color: 'text-accent',    bg: 'bg-accent/10',    border: 'border-accent/20' },
-  archived:  { label: 'Archived',  color: 'text-zinc-500',    bg: 'bg-zinc-500/10',    border: 'border-zinc-500/20' },
+  archived:  { label: 'Archived',  color: 'text-faint',       bg: 'bg-surface-2',      border: 'border-hairline' },
 };
 
 const objectiveOptions = [
@@ -219,7 +219,7 @@ export default function CampaignForm() {
             </div>
             <motion.button
               onClick={startNew}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent text-canvas text-xs font-medium "
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent text-on-accent text-xs font-medium "
             >
               <FaPlus size={9} />
               New
@@ -235,7 +235,7 @@ export default function CampaignForm() {
                   onClick={() => setFilterStatus(s as any)}
                   className={`px-2.5 py-1 rounded-lg text-xs transition-colors border ${
                     filterStatus === s
-                      ? 'bg-accent text-canvas border-accent'
+                      ? 'bg-accent text-on-accent border-accent'
                       : 'border-[var(--input-border)] text-[var(--muted-color)] hover:text-[var(--text-color)] hover:border-accent/20'
                   }`}
                 >
@@ -318,7 +318,7 @@ export default function CampaignForm() {
                             onClick={e => e.stopPropagation()}
                           >
                             <span className="text-xs font-medium text-[var(--text-color)] mr-1">Delete?</span>
-                            <button onClick={() => handleDelete(campaign.id!)} disabled={deletingId === campaign.id} className="px-2.5 py-1.5 rounded-lg bg-danger text-white text-xs font-medium">
+                            <button onClick={() => handleDelete(campaign.id!)} disabled={deletingId === campaign.id} className="px-2.5 py-1.5 rounded-lg bg-danger text-on-danger text-xs font-medium">
                               {deletingId === campaign.id ? '...' : 'Yes'}
                             </button>
                             <button onClick={() => setConfirmDelete(null)} className="px-2.5 py-1.5 rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--muted-color)] text-xs font-medium">
@@ -451,9 +451,9 @@ export default function CampaignForm() {
                 <motion.button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-accent text-canvas text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-accent text-on-accent text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FaSave size={12} />}
+                  {saving ? <div className="w-4 h-4 border-2 border-on-accent/30 border-t-on-accent rounded-full animate-spin" /> : <FaSave size={12} />}
                   {saving ? 'Saving...' : selected?.id ? 'Update Campaign' : 'Save Campaign'}
                 </motion.button>
                 <button type="button" onClick={cancel} className="px-4 py-3 rounded-xl border border-[var(--input-border)] text-[var(--muted-color)] text-xs font-medium hover:text-[var(--text-color)] hover:border-accent/20 transition-colors">
@@ -487,7 +487,7 @@ export default function CampaignForm() {
               {campaigns.length === 0 && (
                 <motion.button
                   onClick={startNew}
-                  className="px-6 py-3 rounded-xl bg-accent text-canvas text-xs font-medium flex items-center gap-2"
+                  className="px-6 py-3 rounded-xl bg-accent text-on-accent text-xs font-medium flex items-center gap-2"
                 >
                   <FaPlus size={10} />
                   Create First Campaign

@@ -62,7 +62,7 @@ const Navbar: React.FC = () => {
       >
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link to="/" aria-label="POSTL Home" className="flex items-center gap-2.5">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-[var(--text-color)] font-mono text-sm font-medium text-[var(--bg-color)]">
+            <span className="grid h-7 w-7 place-items-center rounded-md bg-[var(--accent-primary)] font-mono text-sm font-medium text-[var(--accent-contrast)]">
               P
             </span>
             <span className="text-[15px] font-medium tracking-tight text-[var(--text-color)]">POSTL</span>

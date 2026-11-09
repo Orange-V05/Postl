@@ -37,9 +37,9 @@ const platformLabels: Record<string, string> = {
 };
 
 const statusConfig: Record<PostStatus, { label: string; color: string; bg: string }> = {
-  draft:     { label: 'Draft',     color: 'text-slate-400',   bg: 'bg-slate-500/10' },
+  draft:     { label: 'Draft',     color: 'text-muted',       bg: 'bg-surface-2' },
   published: { label: 'Published', color: 'text-accent', bg: 'bg-accent/10' },
-  archived:  { label: 'Archived',  color: 'text-zinc-500',    bg: 'bg-zinc-500/10' },
+  archived:  { label: 'Archived',  color: 'text-faint',       bg: 'bg-surface-2' },
 };
 
 type SortKey = 'timestamp_desc' | 'timestamp_asc' | 'platform' | 'score';
@@ -217,7 +217,7 @@ const PostHistory: React.FC = () => {
             {hasMore && '+'} Posts
           </span>
           {filterFavorites && (
-            <span className="text-xs font-medium text-amber-500 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full flex items-center gap-1">
+            <span className="text-xs font-medium text-warm bg-warm/10 border border-warm/20 px-3 py-1 rounded-full flex items-center gap-1">
               <FaStar size={8} /> Favorites
             </span>
           )}
@@ -229,8 +229,8 @@ const PostHistory: React.FC = () => {
             onClick={() => setFilterFavorites(f => !f)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${
               filterFavorites
-                ? 'bg-amber-500/15 border-amber-500/30 text-amber-500'
-                : 'bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--muted-color)] hover:border-amber-500/20'
+                ? 'bg-warm/15 border-warm/30 text-warm'
+                : 'bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--muted-color)] hover:border-warm/20'
             }`}
           >
             <FaStar size={9} />
@@ -374,7 +374,7 @@ const PostHistory: React.FC = () => {
                   {!confirmBulkDelete ? (
                     <button
                       onClick={() => setConfirmBulkDelete(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-danger/10 border border-danger/20 text-danger text-xs font-medium hover:bg-danger hover:text-white transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-danger/10 border border-danger/20 text-danger text-xs font-medium hover:bg-danger hover:text-on-danger transition-colors"
                     >
                       <FaTrash size={9} />
                       Delete {selected.size}
@@ -385,7 +385,7 @@ const PostHistory: React.FC = () => {
                       <button
                         onClick={bulkDelete}
                         disabled={bulkDeleting}
-                        className="px-3 py-1.5 rounded-xl bg-danger text-white text-xs font-medium "
+                        className="px-3 py-1.5 rounded-xl bg-danger text-on-danger text-xs font-medium "
                       >
                         {bulkDeleting ? '...' : 'Delete'}
                       </button>
@@ -465,14 +465,14 @@ const PostHistory: React.FC = () => {
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => toggleFavorite(post)}
-                          className={`transition-colors ${post.favorite ? 'text-amber-400' : 'text-[var(--muted-color)] hover:text-amber-400 opacity-0 group-hover:opacity-100'}`}
+                          className={`transition-colors ${post.favorite ? 'text-warm' : 'text-[var(--muted-color)] hover:text-warm opacity-0 group-hover:opacity-100'}`}
                         >
                           <FaStar size={12} />
                         </button>
                         {post.engagementScore && (
                           <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded-md ${
-                            post.engagementScore >= 75 ? 'text-green-500 bg-green-500/10' :
-                            post.engagementScore >= 50 ? 'text-amber-500 bg-amber-500/10' :
+                            post.engagementScore >= 75 ? 'text-success bg-success/10' :
+                            post.engagementScore >= 50 ? 'text-warm bg-warm/10' :
                             'text-danger bg-danger/10'
                           }`}>
                             {post.engagementScore}
@@ -517,14 +517,14 @@ const PostHistory: React.FC = () => {
                     <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => copyToClipboard(post.content, post.id)}
-                        className="p-2 rounded-lg bg-accent/10 text-accent hover:bg-accent hover:text-canvas transition-colors"
+                        className="p-2 rounded-lg bg-accent/10 text-accent hover:bg-accent hover:text-on-accent transition-colors"
                         title="Copy"
                       >
                         {copiedId === post.id ? <FaCheck size={10} /> : <FaCopy size={10} />}
                       </button>
                       <button
                         onClick={() => deletePost(post.id)}
-                        className="p-2 rounded-lg bg-danger/10 text-danger hover:bg-danger hover:text-white transition-colors"
+                        className="p-2 rounded-lg bg-danger/10 text-danger hover:bg-danger hover:text-on-danger transition-colors"
                         title="Delete"
                       >
                         <FaTrash size={10} />
@@ -541,7 +541,7 @@ const PostHistory: React.FC = () => {
               className="col-span-full py-24 flex flex-col items-center justify-center text-center"
             >
               <div className="w-20 h-20 rounded-2xl bg-[var(--input-bg)] border border-[var(--input-border)] flex items-center justify-center mb-8">
-                {filterFavorites ? <FaStar className="text-3xl text-amber-400" /> : <FaHistory className="text-3xl text-[var(--muted-color)]" />}
+                {filterFavorites ? <FaStar className="text-3xl text-warm" /> : <FaHistory className="text-3xl text-[var(--muted-color)]" />}
               </div>
               <h4 className="text-[var(--text-color)] font-medium text-sm mb-4">
                 {searchQuery || filterPlatform !== 'all' || filterFavorites || filterStatus !== 'all'
@@ -558,7 +558,7 @@ const PostHistory: React.FC = () => {
               {(searchQuery || filterPlatform !== 'all' || filterFavorites || filterStatus !== 'all') && (
                 <button
                   onClick={() => { setSearchQuery(''); setFilterPlatform('all'); setFilterFavorites(false); setFilterStatus('all'); }}
-                  className="px-8 py-3 rounded-xl bg-accent/10 border border-accent/20 text-accent text-xs font-medium hover:bg-accent hover:text-canvas transition-colors"
+                  className="px-8 py-3 rounded-xl bg-accent/10 border border-accent/20 text-accent text-xs font-medium hover:bg-accent hover:text-on-accent transition-colors"
                 >
                   CLEAR FILTERS
                 </button>

@@ -183,7 +183,7 @@ export default function BrandVoiceForm() {
             </div>
             <motion.button
               onClick={startNew}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent text-canvas text-xs font-medium "
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent text-on-accent text-xs font-medium "
             >
               <FaPlus size={9} />
               New
@@ -264,7 +264,7 @@ export default function BrandVoiceForm() {
                           <button
                             onClick={() => handleDelete(profile.id!)}
                             disabled={deletingId === profile.id}
-                            className="px-2.5 py-1.5 rounded-lg bg-danger text-white text-xs font-medium hover:opacity-85 transition-colors"
+                            className="px-2.5 py-1.5 rounded-lg bg-danger text-on-danger text-xs font-medium hover:opacity-85 transition-colors"
                           >
                             {deletingId === profile.id ? '...' : 'Yes'}
                           </button>
@@ -365,10 +365,10 @@ export default function BrandVoiceForm() {
                 <motion.button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-accent text-canvas text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-accent text-on-accent text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {saving ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-on-accent/30 border-t-on-accent rounded-full animate-spin" />
                   ) : (
                     <FaSave size={12} />
                   )}
@@ -405,7 +405,7 @@ export default function BrandVoiceForm() {
               {profiles.length === 0 && (
                 <motion.button
                   onClick={startNew}
-                  className="px-6 py-3 rounded-xl bg-accent text-canvas text-xs font-medium flex items-center gap-2"
+                  className="px-6 py-3 rounded-xl bg-accent text-on-accent text-xs font-medium flex items-center gap-2"
                 >
                   <FaPlus size={10} />
                   Create First Profile

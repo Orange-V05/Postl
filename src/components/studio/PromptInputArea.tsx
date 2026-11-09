@@ -67,7 +67,7 @@ const PromptInputArea: React.FC<PromptInputAreaProps> = ({
         <label className="text-xs font-medium text-[var(--muted-color)]">
           Prompt
         </label>
-        <span className={`text-xs font-mono font-medium transition-colors ${charCount > 400 ? 'text-danger' : charCount > 300 ? 'text-amber-500' : 'text-[var(--muted-color)]'}`}>
+        <span className={`text-xs font-mono font-medium transition-colors ${charCount > 400 ? 'text-danger' : charCount > 300 ? 'text-warm' : 'text-[var(--muted-color)]'}`}>
           {charCount > 0 ? `${charCount} / 500` : ''}
         </span>
       </div>

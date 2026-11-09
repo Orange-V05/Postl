@@ -88,8 +88,8 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onSave, saving, saved }) =
               </div>
               {score !== undefined && (
                 <span className={`ml-2 px-2 py-0.5 rounded-lg text-xs font-mono font-medium ${
-                  score >= 75 ? 'text-green-500 bg-green-500/10 border border-green-500/20' :
-                  score >= 50 ? 'text-amber-500 bg-amber-500/10 border border-amber-500/20' :
+                  score >= 75 ? 'text-success bg-success/10 border border-success/20' :
+                  score >= 50 ? 'text-warm bg-warm/10 border border-warm/20' :
                   'text-danger bg-danger/10 border border-danger/20'
                 }`}>
                   {score}
@@ -325,7 +325,7 @@ const RepurposeStudio: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-medium text-[var(--muted-color)]">Source Content</p>
-                <span className={`text-xs font-mono font-medium ${wordCount < 20 ? 'text-danger' : wordCount > 500 ? 'text-amber-500' : 'text-accent'}`}>
+                <span className={`text-xs font-mono font-medium ${wordCount < 20 ? 'text-danger' : wordCount > 500 ? 'text-warm' : 'text-accent'}`}>
                   {wordCount} words {wordCount < 20 ? '(min 20)' : ''}
                 </span>
               </div>
@@ -370,7 +370,7 @@ const RepurposeStudio: React.FC = () => {
                       <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
                         isSelected ? 'bg-accent border-accent' : 'border-muted/50'
                       }`}>
-                        {isSelected && <FaCheck size={8} className="text-canvas" />}
+                        {isSelected && <FaCheck size={8} className="text-on-accent" />}
                       </div>
                       
                       <span className={`text-xs font-medium transition-colors ${
@@ -478,7 +478,7 @@ const RepurposeStudio: React.FC = () => {
                 onClick={() => {
                   results.forEach(a => handleSave(a));
                 }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent/10 border border-accent/20 text-accent text-xs font-medium hover:bg-accent hover:text-canvas transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent/10 border border-accent/20 text-accent text-xs font-medium hover:bg-accent hover:text-on-accent transition-colors"
               >
                 <FaSave size={10} />
                 Save All to Library

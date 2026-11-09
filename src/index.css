@@ -3,70 +3,90 @@
 @tailwind utilities;
 
 /* ─── Tokens ──────────────────────────────────────────────────────────────────
-   One neutral ramp, one accent. 4px grid. Hairlines over shadows.
+   "Ink and vermilion on paper." One tinted neutral ramp per theme, three text
+   roles, one accent (proofreader's vermilion) plus a quiet ochre for warnings.
+   Light is cream paper with navy-ink type; dark is deep ink with parchment type.
+   Every text role holds ≥4.5:1 on every surface in its theme.
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
-  --bg-color: #fafafa;
-  --surface: #ffffff;
-  --surface-2: #f4f4f5;
-  --text-color: #171717;
-  --muted-color: #525252;
-  --faint-color: #737373;
-  --hairline: rgba(0, 0, 0, 0.08);
-  --hairline-strong: rgba(0, 0, 0, 0.14);
+  --bg-color: #f4efe6;
+  --surface: #fbf8f2;
+  --surface-2: #ece5d8;
+  --surface-3: #e3dacb;
+  --text-color: #1c2130;
+  --muted-color: #4a5163;
+  --faint-color: #626775;
+  --hairline: rgba(28, 33, 48, 0.09);
+  --hairline-strong: rgba(28, 33, 48, 0.16);
 
   /* legacy names kept so existing components resolve to the new palette */
   --aurora-bg: var(--bg-color);
   --glass-bg: var(--surface);
   --glass-border: var(--hairline);
   --panel-bg: var(--surface);
-  --input-bg: var(--surface-2);
-  --input-border: var(--hairline);
-  --ring-color: rgba(5, 150, 105, 0.28);
+  --input-bg: var(--surface);
+  --input-border: var(--hairline-strong);
+  --ring-color: rgba(176, 64, 42, 0.28);
   --scrollbar-track: transparent;
-  --scrollbar-thumb: rgba(0, 0, 0, 0.14);
-  --selection-bg: rgba(5, 150, 105, 0.16);
-  --selection-text: #171717;
+  --scrollbar-thumb: rgba(28, 33, 48, 0.18);
+  --selection-bg: rgba(176, 64, 42, 0.18);
+  --selection-text: #1c2130;
 
-  --accent-primary: #047857;
-  --accent-hover: #065f46;
-  --accent-soft: rgba(4, 120, 87, 0.08);
+  --accent-primary: #b0402a;
+  --accent-hover: #963322;
+  --accent-soft: rgba(176, 64, 42, 0.08);
+  --accent-contrast: #fff8f0;
   --accent-secondary: var(--accent-primary);
   --accent-tertiary: var(--accent-primary);
-  --accent-warm: #b45309;
-  --danger: #dc2626;
-  --success: #16a34a;
+  --accent-warm: #86601a;
+  --danger: #b0261e;
+  --danger-contrast: #fff8f0;
+  --success: #3b7550;
+
+  /* inverse panel: an ink block on paper, a paper block on ink */
+  --inverse-bg: #1c2130;
+  --inverse-text: #f4efe6;
+  --inverse-muted: #b9b4aa;
 
   --font-display: 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', monospace;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --transition-spring: var(--ease-out);
+  color-scheme: light;
 }
 
 .dark {
-  --bg-color: #0f0f10;
-  --surface: #141415;
-  --surface-2: #19191b;
-  --surface-3: #232325;
-  --text-color: #ededed;
-  --muted-color: #a1a1a6;
-  --faint-color: #85858b;
-  --hairline: rgba(255, 255, 255, 0.08);
-  --hairline-strong: rgba(255, 255, 255, 0.14);
+  --bg-color: #131722;
+  --surface: #191e2b;
+  --surface-2: #222838;
+  --surface-3: #2b3244;
+  --text-color: #ede6d9;
+  --muted-color: #b5aea1;
+  --faint-color: #9a958c;
+  --hairline: rgba(237, 230, 217, 0.08);
+  --hairline-strong: rgba(237, 230, 217, 0.15);
 
-  --input-bg: var(--surface-2);
-  --ring-color: rgba(52, 211, 153, 0.35);
-  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
-  --selection-bg: rgba(52, 211, 153, 0.22);
-  --selection-text: #ffffff;
+  --input-bg: var(--surface);
+  --input-border: var(--hairline-strong);
+  --ring-color: rgba(240, 138, 98, 0.35);
+  --scrollbar-thumb: rgba(237, 230, 217, 0.14);
+  --selection-bg: rgba(240, 138, 98, 0.26);
+  --selection-text: #ede6d9;
 
-  --accent-primary: #34d399;
-  --accent-hover: #6ee7b7;
-  --accent-soft: rgba(52, 211, 153, 0.1);
-  --accent-warm: #f5a524;
-  --danger: #e5484d;
-  --success: #4cc38a;
+  --accent-primary: #f08a62;
+  --accent-hover: #f5a482;
+  --accent-soft: rgba(240, 138, 98, 0.1);
+  --accent-contrast: #1a1410;
+  --accent-warm: #dcab55;
+  --danger: #f0806f;
+  --danger-contrast: #1a1410;
+  --success: #86c49a;
+
+  --inverse-bg: #ede6d9;
+  --inverse-text: #1c2130;
+  --inverse-muted: #4a5163;
+  color-scheme: dark;
 }
 
 /* ─── Base ──────────────────────────────────────────────────────────────────── */
@@ -131,6 +151,15 @@
 .font-display { font-family: var(--font-display); }
 .font-mono { font-family: var(--font-mono); }
 
+/* Proofreader's underline: a hand-set vermilion stroke under one word */
+.proof-mark {
+  background-image: linear-gradient(var(--accent-primary), var(--accent-primary));
+  background-repeat: no-repeat;
+  background-size: 100% 0.07em;
+  background-position: 0 92%;
+  padding-bottom: 0.04em;
+}
+
 /* ─── Typewriter caret ──────────────────────────────────────────────────────── */
 @keyframes blink-caret {
   0%, 100% { opacity: 1; }
@@ -172,7 +201,7 @@
 .platform-twitter { --platform-color: #1d9bf0; }
 .platform-instagram { --platform-color: #e4405f; }
 .platform-linkedin { --platform-color: #0a66c2; }
-.platform-tiktok { --platform-color: #25f4ee; }
+.platform-tiktok { --platform-color: #0e9f9a; }
 .platform-email { --platform-color: #d97706; }
 .platform-blog { --platform-color: #7c3aed; }
 .platform-ad { --platform-color: #dc2626; }

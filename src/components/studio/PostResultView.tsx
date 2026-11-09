@@ -94,7 +94,7 @@ const useTypewriter = (text: string, speed: number = 12) => {
 const EngagementScore: React.FC<{ score: number }> = ({ score }) => {
   const circumference = 2 * Math.PI * 45;
   const offset = circumference - (score / 100) * circumference;
-  const color = score >= 75 ? '#22c55e' : score >= 50 ? '#f59e0b' : '#ef4444';
+  const color = score >= 75 ? 'var(--success)' : score >= 50 ? 'var(--accent-warm)' : 'var(--danger)';
   const label = score >= 75 ? 'Excellent' : score >= 50 ? 'Good' : 'Needs Work';
 
   return (
@@ -231,8 +231,8 @@ const renderFormattedContent = (text: string, category: string, fontSize: number
           }
           if (/^CTA:/i.test(trimmed)) {
             return (
-              <div key={i} className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
-                <span className="text-xs font-medium text-amber-500">Call to Action</span>
+              <div key={i} className="p-4 rounded-xl bg-warm/5 border border-warm/20">
+                <span className="text-xs font-medium text-warm">Call to Action</span>
                 <p className="text-[var(--text-color)] font-medium mt-1">{trimmed.replace(/^CTA:\s*/i, '')}</p>
               </div>
             );

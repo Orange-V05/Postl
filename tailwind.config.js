@@ -10,6 +10,8 @@ module.exports = {
     extend: {
       colors: {
         accent: token('accent-primary'),
+        'on-accent': token('accent-contrast'),
+        'on-danger': token('danger-contrast'),
         warm: token('accent-warm'),
         danger: token('danger'),
         success: token('success'),
