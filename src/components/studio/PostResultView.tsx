@@ -11,7 +11,7 @@ interface PostResultViewProps {
   seed: number;
   fontSize: number;
   copied: boolean;
-  handleCopy: () => void;
+  handleCopy: (text?: string) => void;
   feedbackStatus: 'submitted' | null;
   handleFeedback: (type: 'helpful' | 'unhelpful') => void;
   strategyBrief?: {
@@ -50,6 +50,10 @@ const analyzeContent = (text: string) => {
     readMinutes,
     momentum,
   };
+};
+
+const platformLimits: Record<string, number> = {
+  twitter: 280, instagram: 2200, linkedin: 3000, tiktok: 2200, ad: 600,
 };
 
 const downloadMarkdown = (text: string, platform: string, category: string) => {
@@ -282,7 +286,7 @@ const PostResultView: React.FC<PostResultViewProps> = ({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="relative flex flex-col overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--surface)]"
+          className="relative flex flex-col overflow-hidden rounded-2xl glass-panel"
         >
           {/* Content */}
           <div className="relative z-10 flex flex-col p-8 lg:p-12">
@@ -321,7 +325,7 @@ const PostResultView: React.FC<PostResultViewProps> = ({
                   </motion.button>
                 )}
                 <button
-                  onClick={handleCopy}
+                  onClick={() => handleCopy(currentText)}
                   className="grid h-9 w-9 place-items-center rounded-lg text-[var(--muted-color)] transition-colors duration-150 hover:text-[var(--text-color)] border border-[var(--hairline-strong)]"
                   title="Copy to Clipboard"
                 >
@@ -348,14 +352,39 @@ const PostResultView: React.FC<PostResultViewProps> = ({
                   ['Words', contentStats.words.toString()],
                   ['Hashtags', contentStats.hashtags.toString()],
                   ['Read', `${contentStats.readMinutes} min`],
-                ].map(([label, value]) => (
-                  <div key={label} className="rounded-lg border border-[var(--hairline)] p-3">
-                    <p className="text-xs text-[var(--faint-color)]">{label}</p>
-                    <p className="mt-1 text-lg font-medium tabular-nums text-[var(--text-color)]">{value}</p>
+                ].map(([label, value], si) => (
+                  <div key={label} className={`soft-${(si % 3) + 1} rounded-lg p-3`}>
+                    <p className="text-xs opacity-80">{label}</p>
+                    <p className="mt-1 text-lg font-medium tabular-nums">{value}</p>
                   </div>
                 ))}
               </motion.div>
             )}
+
+            {!isTyping && platformLimits[platform] && (() => {
+              const limit = platformLimits[platform];
+              const ratio = contentStats.chars / limit;
+              const over = ratio > 1;
+              return (
+                <div className="mb-6">
+                  <div className="mb-1.5 flex items-center justify-between text-xs">
+                    <span className="text-[var(--muted-color)]">
+                      {over ? `${contentStats.chars - limit} characters over the ${platformLabels[platform] || platform} limit` : `Fits ${platformLabels[platform] || platform}`}
+                    </span>
+                    <span className="font-mono tabular-nums text-[var(--muted-color)]">{contentStats.chars} / {limit}</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-[var(--hairline)]">
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ background: over ? 'var(--danger)' : 'linear-gradient(90deg, var(--c1), var(--c2), var(--c3))' }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(100, ratio * 100)}%` }}
+                      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Variant Tabs (if multiple) */}
             {variants.length > 1 && (
@@ -481,7 +510,7 @@ const PostResultView: React.FC<PostResultViewProps> = ({
               </div>
 
               <button
-                onClick={handleCopy}
+                onClick={() => handleCopy(currentText)}
                 className="flex h-9 items-center justify-center gap-2 rounded-lg bg-[var(--text-color)] px-4 text-sm font-medium text-[var(--bg-color)] transition-opacity duration-150 hover:opacity-85"
               >
                 {copied ? <FaCheck /> : <FaRegCopy />}

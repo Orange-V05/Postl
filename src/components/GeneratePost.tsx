@@ -95,7 +95,20 @@ const GeneratePost: React.FC = () => {
   const addRecentPrompt = store?.addRecentPrompt || (() => undefined);
   const recentPrompts = store?.recentPrompts || [];
 
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState<string>(() => {
+    try { return localStorage.getItem('postl:draft') || ''; } catch { return ''; }
+  });
+
+  // Keep the draft prompt across reloads
+  useEffect(() => {
+    const id = setTimeout(() => {
+      try {
+        if (prompt) localStorage.setItem('postl:draft', prompt);
+        else localStorage.removeItem('postl:draft');
+      } catch { /* storage unavailable */ }
+    }, 300);
+    return () => clearTimeout(id);
+  }, [prompt]);
   const [platform, setPlatform] = useState<Platform>('twitter');
   const [topic, setTopic] = useState<'general' | 'motivational' | 'tech' | 'travel' | 'funny' | 'educational' | 'startup'>('tech');
   const [contentType, setContentType] = useState<ContentType>('single');
@@ -267,9 +280,10 @@ const GeneratePost: React.FC = () => {
     }
   };
 
-  const handleCopy = () => {
-    if (!result) return;
-    navigator.clipboard.writeText(result);
+  const handleCopy = (text?: string) => {
+    const value = text || result;
+    if (!value) return;
+    navigator.clipboard.writeText(value).catch(() => undefined);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -304,7 +318,7 @@ const GeneratePost: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[var(--surface)] p-7 rounded-2xl border-[var(--hairline)] "
+          className="glass-panel p-7 rounded-2xl"
         >
           <ModelSelector
             selectedModel={prefs.selectedModel}
@@ -325,6 +339,7 @@ const GeneratePost: React.FC = () => {
             setCreativity={(c) => setPrefs({ creativity: c })}
             fontSize={prefs.fontSize}
             setFontSize={(s) => setPrefs({ fontSize: s })}
+            onSubmit={() => { if (!loading) handleGenerate(); }}
           />
 
           {/* Launch Brief */}
@@ -357,10 +372,10 @@ const GeneratePost: React.FC = () => {
                 ['Goal', intelligence.primaryGoal],
                 ['Pattern', intelligence.winningPattern],
                 ['Visual cue', intelligence.visualCue],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-xl border border-[var(--input-border)] bg-panel-bg/60 p-3">
-                  <p className="mb-1 font-medium text-[var(--muted-color)]">{label}</p>
-                  <p className="font-medium leading-snug text-[var(--text-color)]">{value}</p>
+              ].map(([label, value], bi) => (
+                <div key={label} className={`soft-${(bi % 3) + 1} rounded-xl p-3`}>
+                  <p className="mb-1 font-medium opacity-80">{label}</p>
+                  <p className="font-medium leading-snug">{value}</p>
                 </div>
               ))}
             </div>
@@ -417,6 +432,7 @@ const GeneratePost: React.FC = () => {
               <>
                 <FaMagic className="text-sm" />
                 <span>Generate</span>
+                <span className="kbd ml-1 hidden sm:inline-flex">Ctrl ↵</span>
               </>
             )}
           </button>

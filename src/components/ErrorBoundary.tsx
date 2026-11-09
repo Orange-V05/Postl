@@ -27,7 +27,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     if (this.state.hasError) {
       return (
         <div className="flex min-h-screen items-center justify-center bg-[var(--bg-color)] p-6 text-[var(--text-color)]">
-          <div role="alert" className="w-full max-w-md rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-8">
+          <div role="alert" className="w-full max-w-md rounded-2xl glass-panel p-8">
             <h2 className="text-xl font-medium tracking-tight">Something went wrong</h2>
             <p className="mt-2 text-sm leading-relaxed text-[var(--muted-color)]">
               POSTL hit an error it couldn't recover from. Reloading usually fixes it. If it keeps happening, clear the

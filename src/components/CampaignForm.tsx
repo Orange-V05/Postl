@@ -211,7 +211,7 @@ export default function CampaignForm() {
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Sidebar */}
       <div className="w-full lg:w-80 flex-shrink-0 space-y-3">
-        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--hairline)] p-5">
+        <div className="glass-panel rounded-2xl p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
               <p className="text-xs font-medium text-accent mb-1">Campaign Workspace</p>
@@ -346,7 +346,7 @@ export default function CampaignForm() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="bg-[var(--surface)] rounded-2xl border border-[var(--hairline)] p-7 space-y-5"
+              className="glass-panel rounded-2xl p-7 space-y-5"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -467,7 +467,7 @@ export default function CampaignForm() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="bg-[var(--surface)] rounded-2xl border-2 border-dashed border-[var(--hairline)] p-12 flex flex-col items-center justify-center text-center min-h-[400px]"
+              className="frost rounded-2xl border-2 border-dashed border-[var(--hairline)] p-12 flex flex-col items-center justify-center text-center min-h-[400px]"
             >
               <motion.div
                 animate={{ y: [0, -8, 0] }}

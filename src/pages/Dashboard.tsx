@@ -76,8 +76,8 @@ const AnalyticsPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--hairline)] lg:grid-cols-4">
-        {stats.map((s) => (
-          <div key={s.label} className="bg-[var(--surface)] p-5">
+        {stats.map((s, si) => (
+          <div key={s.label} className="relative bg-[var(--surface-solid)] p-5"><span aria-hidden="true" className="absolute inset-x-0 top-0 h-1" style={{ background: `var(--c${(si % 3) + 1})` }} />
             <p className="text-xs text-[var(--faint-color)]">{s.label}</p>
             <p className="mt-2 text-2xl font-medium tabular-nums tracking-tight text-[var(--text-color)]">{s.value}</p>
             {s.sub && <p className="mt-1 text-xs tabular-nums text-[var(--muted-color)]">{s.sub}</p>}
@@ -86,7 +86,7 @@ const AnalyticsPanel: React.FC = () => {
       </div>
 
       {breakdown.length > 0 && (
-        <div className="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-6">
+        <div className="glass-panel rounded-2xl p-6">
           <h4 className="mb-5 text-sm font-medium text-[var(--text-color)]">By platform</h4>
           <div className="space-y-4">
             {breakdown.map(([platform, count], i) => {
@@ -104,7 +104,8 @@ const AnalyticsPanel: React.FC = () => {
                       initial={{ width: 0 }}
                       animate={{ width: `${pct}%` }}
                       transition={{ duration: 0.6, delay: i * 0.05, ease }}
-                      className="h-full rounded-full bg-[var(--accent-primary)]"
+                      className="h-full rounded-full"
+                      style={{ background: `var(--c${(i % 3) + 1})` }}
                     />
                   </div>
                 </div>
@@ -156,7 +157,7 @@ const Dashboard: React.FC = () => {
             aria-label="Studio sections"
             className="-mx-4 flex overflow-x-auto px-4 sm:mx-0 sm:px-0"
           >
-            <div className="flex gap-0.5 rounded-xl border border-[var(--hairline)] bg-[var(--surface)] p-1">
+            <div className="flex gap-0.5 rounded-xl glass-panel p-1">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 const Icon = tab.icon;
@@ -174,9 +175,11 @@ const Dashboard: React.FC = () => {
                     {isActive && (
                       <motion.span
                         layoutId="tab-indicator"
-                        className="absolute inset-0 rounded-lg border border-[var(--hairline-strong)] bg-[var(--surface-2)]"
+                        className="absolute inset-0 overflow-hidden rounded-lg bg-[var(--surface-solid)] shadow-[var(--shadow-card)]"
                         transition={reduce ? { duration: 0 } : { duration: 0.25, ease }}
-                      />
+                      >
+                        <span aria-hidden="true" className="tri-edge absolute inset-x-0 bottom-0 h-[3px]" />
+                      </motion.span>
                     )}
                     <Icon size={15} strokeWidth={1.75} className="relative" />
                     <span className="relative hidden sm:inline">{tab.label}</span>

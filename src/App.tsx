@@ -26,16 +26,23 @@ function App() {
   const { prefs } = store;
 
   return (
-    <div className={`${prefs?.darkMode ? 'dark' : 'light'} min-h-screen bg-[var(--bg-color)] text-[var(--text-color)]`}>
+    <div className={`${prefs?.darkMode ? 'dark' : 'light'} relative min-h-screen bg-[var(--bg-color)] text-[var(--text-color)]`}>
+      <div className="mesh" aria-hidden="true">
+        <div className="mesh__blob mesh__blob--1" />
+        <div className="mesh__blob mesh__blob--2" />
+        <div className="mesh__blob mesh__blob--3" />
+        <div className="mesh__grain" />
+      </div>
+      <div className="app-layer">
       <Navbar />
       {auth?.configError && (
-        <div role="alert" className="relative z-50 mx-auto mt-24 w-[min(92vw,920px)] rounded-xl border border-[var(--hairline-strong)] bg-[var(--surface)] px-5 py-4 text-sm leading-relaxed text-[var(--muted-color)]">
+        <div role="alert" className="relative z-50 mx-auto mt-24 w-[min(92vw,920px)] rounded-xl glass-panel px-5 py-4 text-sm leading-relaxed text-[var(--muted-color)]">
           <span className="font-medium text-[var(--accent-warm)]">Deployment configuration required.</span>{' '}
           Firebase environment variables are missing on this deployment. Public pages are available, but login, signup, dashboard persistence, and generation are disabled until Vercel <code className="font-mono text-[var(--text-color)]">VITE_FIREBASE_*</code> variables are configured and redeployed.
         </div>
       )}
       {apiConfigError && (
-        <div role="status" className="relative z-50 mx-auto mt-4 w-[min(92vw,920px)] rounded-xl border border-[var(--hairline-strong)] bg-[var(--surface)] px-5 py-4 text-sm leading-relaxed text-[var(--muted-color)]">
+        <div role="status" className="relative z-50 mx-auto mt-4 w-[min(92vw,920px)] rounded-xl glass-panel px-5 py-4 text-sm leading-relaxed text-[var(--muted-color)]">
           <span className="font-medium text-[var(--text-color)]">Backend API not configured.</span>{' '}
           Generation and repurposing need a persistent backend. Set <code className="font-mono text-[var(--text-color)]">VITE_API_BASE_URL</code> in Vercel to the deployed backend URL and redeploy.
         </div>
@@ -63,6 +70,7 @@ function App() {
           />
         </Routes>
       </Suspense>
+      </div>
     </div>
   );
 }

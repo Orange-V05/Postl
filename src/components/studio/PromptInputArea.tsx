@@ -7,6 +7,7 @@ interface PromptInputAreaProps {
   setCreativity: (c: number) => void;
   fontSize: number;
   setFontSize: (s: number) => void;
+  onSubmit?: () => void;
 }
 
 const placeholders = [
@@ -21,7 +22,7 @@ const placeholders = [
 const PromptInputArea: React.FC<PromptInputAreaProps> = ({
   prompt, setPrompt,
   creativity, setCreativity,
-  fontSize, setFontSize
+  fontSize, setFontSize, onSubmit
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
@@ -68,7 +69,7 @@ const PromptInputArea: React.FC<PromptInputAreaProps> = ({
           Prompt
         </label>
         <span className={`text-xs font-mono font-medium transition-colors ${charCount > 400 ? 'text-danger' : charCount > 300 ? 'text-warm' : 'text-[var(--muted-color)]'}`}>
-          {charCount > 0 ? `${charCount} / 500` : ''}
+          {charCount > 0 ? `${charCount} / 500` : <span className="hidden sm:inline">Ctrl + Enter to generate</span>}
         </span>
       </div>
       
@@ -81,6 +82,13 @@ const PromptInputArea: React.FC<PromptInputAreaProps> = ({
           placeholder={placeholders[placeholderIdx]}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && prompt.trim()) {
+              e.preventDefault();
+              onSubmit?.();
+            }
+          }}
+          aria-label="Prompt" 
         />
         {/* AI Attention Glow */}
       </div>
@@ -90,8 +98,9 @@ const PromptInputArea: React.FC<PromptInputAreaProps> = ({
         {assistChips.map((chip, i) => (
           <button
             key={i}
+            type="button"
             onClick={() => insertChip(chip.text)}
-            className="px-2.5 py-1.5 rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] text-xs font-medium text-[var(--muted-color)] hover:text-accent hover:border-accent/30 transition-colors"
+            className={`soft-${(i % 3) + 1} px-2.5 py-1.5 rounded-lg text-xs font-medium transition-transform hover:-translate-y-0.5`}
           >
             {chip.label}
           </button>

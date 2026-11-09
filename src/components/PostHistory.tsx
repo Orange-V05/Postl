@@ -252,7 +252,7 @@ const PostHistory: React.FC = () => {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 8 }}
-                  className="absolute right-0 top-full mt-2 z-30 bg-[var(--surface)] border border-[var(--hairline)] rounded-2xl p-2 min-w-[180px] "
+                  className="absolute right-0 top-full mt-2 z-30 bg-[var(--surface-solid)] shadow-[var(--shadow-card)] border border-[var(--hairline)] rounded-2xl p-2 min-w-[180px] "
                 >
                   {[
                     { key: 'timestamp_desc', label: 'Newest first' },
@@ -427,7 +427,7 @@ const PostHistory: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: Math.min(i * 0.03, 0.3) }}
-                  className={`bg-[var(--surface)] p-5 rounded-2xl border transition-colors group relative overflow-hidden flex flex-col justify-between ${
+                  className={`glass-panel lift-card p-5 rounded-2xl border transition-colors group relative overflow-hidden flex flex-col justify-between ${
                     isSelected
                       ? 'border-accent/40 bg-accent/5'
                       : 'border-[var(--hairline)] hover:border-accent/20'

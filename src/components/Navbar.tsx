@@ -56,14 +56,19 @@ const Navbar: React.FC = () => {
       <nav
         className={`fixed top-0 left-0 z-[100] w-full border-b transition-colors duration-200 ${
           scrolled || mobileOpen
-            ? "border-[var(--hairline)] bg-[var(--bg-color)]"
+            ? "border-[var(--hairline)] frost"
             : "border-transparent bg-transparent"
         }`}
       >
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link to="/" aria-label="POSTL Home" className="flex items-center gap-2.5">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-[var(--accent-primary)] font-mono text-sm font-medium text-[var(--accent-contrast)]">
-              P
+            <span className="relative grid h-7 w-7 place-items-center overflow-hidden rounded-md font-mono text-sm font-medium">
+              <span aria-hidden="true" className="absolute inset-0 grid grid-cols-3">
+                <span className="bg-[var(--c1)]" />
+                <span className="bg-[var(--c2)]" />
+                <span className="bg-[var(--c3)]" />
+              </span>
+              <span className="relative rounded-sm bg-[var(--surface-solid)] px-1 leading-5 text-[var(--text-color)]">P</span>
             </span>
             <span className="text-[15px] font-medium tracking-tight text-[var(--text-color)]">POSTL</span>
           </Link>
@@ -148,7 +153,7 @@ const Navbar: React.FC = () => {
             transition={{ duration: 0.2, ease }}
             className="fixed inset-x-0 top-16 bottom-0 z-[99] md:hidden"
           >
-            <div className="absolute inset-0 bg-[var(--bg-color)]" onClick={() => setMobileOpen(false)} />
+            <div className="absolute inset-0 frost" onClick={() => setMobileOpen(false)} />
             <div className="relative space-y-1 border-b border-[var(--hairline)] px-4 pb-6 pt-2">
               {user ? (
                 <>

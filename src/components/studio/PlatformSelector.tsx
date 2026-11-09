@@ -32,60 +32,51 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({ platform, setPlatfo
   return (
     <div className="mb-6">
       <label className="block text-xs font-medium text-[var(--muted-color)] mb-3 ml-1">
-        Target Platform
+        Target platform
       </label>
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-        {platformOptions.map((p) => {
+        {platformOptions.map((p, idx) => {
           const isActive = platform === p.id;
+          const tone = (idx % 3) + 1;
           return (
             <motion.button
               key={p.id}
+              type="button"
+              aria-pressed={isActive}
               onClick={() => setPlatform(p.id)}
-              className={`relative flex flex-col items-center gap-1.5 p-3 rounded-2xl text-center transition-colors border overflow-hidden ${
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              className={`relative flex flex-col items-center gap-1.5 overflow-hidden rounded-2xl border p-3 text-center transition-colors ${
                 isActive
-                  ? 'border-opacity-60 '
-                  : 'bg-[var(--input-bg)] border-[var(--input-border)] hover:border-opacity-40'
+                  ? 'border-transparent'
+                  : 'border-[var(--input-border)] bg-[var(--input-bg)] hover:border-[var(--hairline-strong)]'
               }`}
-              style={isActive ? {
-                background: `${p.color}10`,
-                borderColor: `${p.color}50`,
-                boxShadow: `0 8px 25px ${p.color}15`,
-              } : {}}
             >
               {isActive && (
                 <motion.div
                   layoutId="platform-glow"
-                  className="absolute inset-0 rounded-2xl"
-                  style={{ background: `${p.color}06`, border: `1px solid ${p.color}25` }}
+                  className={`tile-${tone} absolute inset-0 rounded-2xl`}
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
-              {/* Active pulse ring */}
-              {isActive && (
-                <motion.div
-                  className="absolute inset-0 rounded-2xl"
-                  animate={{ boxShadow: [`0 0 0 0 ${p.color}30`, `0 0 0 6px ${p.color}00`] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                />
-              )}
               <span
-                className={`relative z-10 text-lg transition-colors ${isActive ? '' : ''}`}
-                style={{ color: isActive ? p.color : 'var(--muted-color)' }}
+                className="relative z-10 text-lg"
+                style={{ color: isActive ? `var(--c${tone}-on)` : 'var(--muted-color)' }}
               >
                 {p.icon}
               </span>
-              <span className={`relative z-10 text-xs leading-tight ${
-                isActive ? 'text-[var(--text-color)]' : 'text-[var(--muted-color)]'
-              }`}>
+              <span
+                className="relative z-10 text-xs font-medium leading-tight"
+                style={{ color: isActive ? `var(--c${tone}-on)` : 'var(--muted-color)' }}
+              >
                 {p.name}
               </span>
-              {/* Hint tooltip on hover */}
               {isActive && (
                 <motion.span
-                  initial={{ opacity: 0, y: 5 }}
+                  initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="relative z-10 text-[7px] font-medium opacity-60 leading-tight mt-0.5"
-                  style={{ color: p.color }}
+                  className="relative z-10 mt-0.5 text-[11px] leading-tight"
+                  style={{ color: `var(--c${tone}-on)` }}
                 >
                   {p.hint}
                 </motion.span>

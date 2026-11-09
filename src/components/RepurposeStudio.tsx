@@ -75,11 +75,11 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onSave, saving, saved }) =
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-[var(--surface)] rounded-2xl border border-[var(--hairline)] overflow-hidden"
+      className="glass-panel rounded-2xl overflow-hidden"
     >
       {/* Header */}
       <div className="border-b border-[var(--hairline)]">
-        <div className="bg-[var(--surface)]">
+        <div>
           <div className="flex items-center justify-between px-5 py-3">
             <div className="flex items-center gap-2.5">
               <div>
@@ -290,7 +290,7 @@ const RepurposeStudio: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[var(--surface)] rounded-2xl border border-[var(--hairline)] p-7 space-y-6"
+            className="glass-panel rounded-2xl p-7 space-y-6"
           >
             <div>
               <p className="text-xs font-medium text-accent mb-2">Repurpose Studio</p>
@@ -346,7 +346,7 @@ const RepurposeStudio: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-[var(--surface)] rounded-2xl border border-[var(--hairline)] p-6 space-y-6"
+            className="glass-panel rounded-2xl p-6 space-y-6"
           >
             {/* Target Platforms */}
             <div>
