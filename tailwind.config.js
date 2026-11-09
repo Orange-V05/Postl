@@ -11,6 +11,9 @@ module.exports = {
       colors: {
         accent: token('accent-primary'),
         'on-accent': token('accent-contrast'),
+        'accent-2': token('accent-2'),
+        highlight: token('highlight'),
+        'on-highlight': token('highlight-text'),
         'on-danger': token('danger-contrast'),
         warm: token('accent-warm'),
         danger: token('danger'),

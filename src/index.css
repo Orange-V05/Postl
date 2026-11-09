@@ -3,21 +3,22 @@
 @tailwind utilities;
 
 /* ─── Tokens ──────────────────────────────────────────────────────────────────
-   "Ink and vermilion on paper." One tinted neutral ramp per theme, three text
-   roles, one accent (proofreader's vermilion) plus a quiet ochre for warnings.
-   Light is cream paper with navy-ink type; dark is deep ink with parchment type.
-   Every text role holds ≥4.5:1 on every surface in its theme.
+   Light: "Harbour" — pale sky-blue paper, deep sea-ink type, sea-green accent,
+   light-blue secondary and a lime-yellow highlighter.
+   Dark: "Velvet" — plum-black velvet, warm parchment type, tangerine accent,
+   gold secondary and a velvet-red highlight / band.
+   Every text role holds >=4.5:1 on every surface in its theme.
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
-  --bg-color: #f4efe6;
-  --surface: #fbf8f2;
-  --surface-2: #ece5d8;
-  --surface-3: #e3dacb;
-  --text-color: #1c2130;
-  --muted-color: #4a5163;
-  --faint-color: #626775;
-  --hairline: rgba(28, 33, 48, 0.09);
-  --hairline-strong: rgba(28, 33, 48, 0.16);
+  --bg-color: #e6f1fa;
+  --surface: #f6fbff;
+  --surface-2: #d8e9f5;
+  --surface-3: #c9dfef;
+  --text-color: #0d2633;
+  --muted-color: #33525f;
+  --faint-color: #4a6573;
+  --hairline: rgba(13, 38, 51, 0.10);
+  --hairline-strong: rgba(13, 38, 51, 0.18);
 
   /* legacy names kept so existing components resolve to the new palette */
   --aurora-bg: var(--bg-color);
@@ -26,27 +27,40 @@
   --panel-bg: var(--surface);
   --input-bg: var(--surface);
   --input-border: var(--hairline-strong);
-  --ring-color: rgba(176, 64, 42, 0.28);
+  --ring-color: rgba(11, 110, 89, 0.3);
   --scrollbar-track: transparent;
-  --scrollbar-thumb: rgba(28, 33, 48, 0.18);
-  --selection-bg: rgba(176, 64, 42, 0.18);
-  --selection-text: #1c2130;
+  --scrollbar-thumb: rgba(13, 38, 51, 0.2);
+  --selection-bg: #d6f04c;
+  --selection-text: #0d2633;
 
-  --accent-primary: #b0402a;
-  --accent-hover: #963322;
-  --accent-soft: rgba(176, 64, 42, 0.08);
-  --accent-contrast: #fff8f0;
-  --accent-secondary: var(--accent-primary);
-  --accent-tertiary: var(--accent-primary);
-  --accent-warm: #86601a;
-  --danger: #b0261e;
-  --danger-contrast: #fff8f0;
-  --success: #3b7550;
+  /* sea green */
+  --accent-primary: #0b6e59;
+  --accent-hover: #095c4a;
+  --accent-soft: rgba(11, 110, 89, 0.1);
+  --accent-contrast: #f4fffb;
+  /* light blue */
+  --accent-2: #2a77ab;
+  --accent-2-soft: rgba(96, 172, 222, 0.22);
+  /* lime yellow, a highlighter: only ever behind ink */
+  --highlight: #d6f04c;
+  --highlight-soft: rgba(214, 240, 76, 0.45);
+  --highlight-text: #0d2633;
+  --accent-secondary: var(--accent-2);
+  --accent-tertiary: var(--highlight);
+  --accent-warm: #7d5a00;
+  --danger: #b4232f;
+  --danger-contrast: #fff6f6;
+  --success: #1d6b3c;
 
-  /* inverse panel: an ink block on paper, a paper block on ink */
-  --inverse-bg: #1c2130;
-  --inverse-text: #f4efe6;
-  --inverse-muted: #b9b4aa;
+  /* colored band: deep sea */
+  --band-bg: #0d3b52;
+  --band-text: #eaf6ff;
+  --band-muted: #b9dcef;
+  --band-pop: #d6f04c;
+
+  --inverse-bg: #0d2633;
+  --inverse-text: #e6f1fa;
+  --inverse-muted: #b9dcef;
 
   --font-display: 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Geist', ui-sans-serif, system-ui, sans-serif;
@@ -57,35 +71,49 @@
 }
 
 .dark {
-  --bg-color: #131722;
-  --surface: #191e2b;
-  --surface-2: #222838;
-  --surface-3: #2b3244;
-  --text-color: #ede6d9;
-  --muted-color: #b5aea1;
-  --faint-color: #9a958c;
-  --hairline: rgba(237, 230, 217, 0.08);
-  --hairline-strong: rgba(237, 230, 217, 0.15);
+  --bg-color: #160c12;
+  --surface: #1f1219;
+  --surface-2: #2a1720;
+  --surface-3: #361d28;
+  --text-color: #f7ead6;
+  --muted-color: #d2bba6;
+  --faint-color: #ad9888;
+  --hairline: rgba(247, 234, 214, 0.08);
+  --hairline-strong: rgba(247, 234, 214, 0.16);
 
   --input-bg: var(--surface);
   --input-border: var(--hairline-strong);
-  --ring-color: rgba(240, 138, 98, 0.35);
-  --scrollbar-thumb: rgba(237, 230, 217, 0.14);
-  --selection-bg: rgba(240, 138, 98, 0.26);
-  --selection-text: #ede6d9;
+  --ring-color: rgba(255, 143, 69, 0.38);
+  --scrollbar-thumb: rgba(247, 234, 214, 0.14);
+  --selection-bg: #8e1a33;
+  --selection-text: #f7ead6;
 
-  --accent-primary: #f08a62;
-  --accent-hover: #f5a482;
-  --accent-soft: rgba(240, 138, 98, 0.1);
-  --accent-contrast: #1a1410;
-  --accent-warm: #dcab55;
-  --danger: #f0806f;
-  --danger-contrast: #1a1410;
-  --success: #86c49a;
+  /* tangerine */
+  --accent-primary: #ff8f45;
+  --accent-hover: #ffa566;
+  --accent-soft: rgba(255, 143, 69, 0.12);
+  --accent-contrast: #1a0d12;
+  /* gold */
+  --accent-2: #e6b84e;
+  --accent-2-soft: rgba(230, 184, 78, 0.14);
+  /* velvet red, a highlight behind parchment type */
+  --highlight: #8e1a33;
+  --highlight-soft: rgba(142, 26, 51, 0.45);
+  --highlight-text: #f7ead6;
+  --accent-warm: #e6b84e;
+  --danger: #ff6b7a;
+  --danger-contrast: #1a0d12;
+  --success: #9ccf8a;
 
-  --inverse-bg: #ede6d9;
-  --inverse-text: #1c2130;
-  --inverse-muted: #4a5163;
+  /* colored band: velvet */
+  --band-bg: #6e1229;
+  --band-text: #f7ead6;
+  --band-muted: #e8c6b4;
+  --band-pop: #f2c75c;
+
+  --inverse-bg: #f7ead6;
+  --inverse-text: #160c12;
+  --inverse-muted: #5a3a44;
   color-scheme: dark;
 }
 
@@ -151,14 +179,20 @@
 .font-display { font-family: var(--font-display); }
 .font-mono { font-family: var(--font-mono); }
 
-/* Proofreader's underline: a hand-set vermilion stroke under one word */
+/* Highlighter swipe behind one word: lime on light, velvet on dark */
 .proof-mark {
-  background-image: linear-gradient(var(--accent-primary), var(--accent-primary));
+  background-image: linear-gradient(var(--highlight), var(--highlight));
   background-repeat: no-repeat;
-  background-size: 100% 0.07em;
-  background-position: 0 92%;
-  padding-bottom: 0.04em;
+  background-size: 100% 0.42em;
+  background-position: 0 88%;
+  padding: 0 0.08em;
+  margin: 0 -0.04em;
+  border-radius: 0.08em;
+  color: var(--highlight-text);
 }
+
+/* Small colored square that sits before section labels */
+.chip-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
 
 /* ─── Typewriter caret ──────────────────────────────────────────────────────── */
 @keyframes blink-caret {

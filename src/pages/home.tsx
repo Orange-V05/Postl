@@ -173,7 +173,7 @@ const Home: React.FC = () => {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <button
               onClick={() => navigate("/signup")}
-              className="inline-flex h-11 items-center gap-2 rounded-lg bg-[var(--text-color)] px-5 text-sm font-medium text-[var(--bg-color)] transition-opacity duration-150 hover:opacity-85"
+              className="inline-flex h-11 items-center gap-2 rounded-lg bg-[var(--accent-primary)] px-5 text-sm font-medium text-[var(--accent-contrast)] transition-colors duration-150 hover:bg-[var(--accent-hover)]"
             >
               Start writing, free
               <ArrowRight size={16} strokeWidth={1.75} />
@@ -198,11 +198,11 @@ const Home: React.FC = () => {
       </section>
 
       {/* Platforms */}
-      <section className="border-y border-[var(--hairline)]">
+      <section className="bg-[var(--band-bg)]">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-6 text-sm sm:px-6">
-          <span className="text-[var(--faint-color)]">Writes for</span>
+          <span className="font-mono text-xs uppercase tracking-wider text-[var(--band-pop)]">Writes for</span>
           {platforms.map((p) => (
-            <span key={p} className="text-[var(--muted-color)]">{p}</span>
+            <span key={p} className="text-[var(--band-text)]">{p}</span>
           ))}
         </div>
       </section>
@@ -216,7 +216,15 @@ const Home: React.FC = () => {
         <div className="grid gap-px overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--hairline)] sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f, i) => (
             <Reveal key={f.title} delay={i * 0.04} className="bg-[var(--surface)] p-6">
-              <f.icon size={18} strokeWidth={1.75} className="text-[var(--accent-primary)]" />
+              <span
+                className="grid h-9 w-9 place-items-center rounded-lg"
+                style={{
+                  background: ['var(--accent-soft)', 'var(--accent-2-soft)', 'var(--highlight-soft)'][i % 3],
+                  color: ['var(--accent-primary)', 'var(--accent-2)', 'var(--text-color)'][i % 3],
+                }}
+              >
+                <f.icon size={18} strokeWidth={1.75} />
+              </span>
               <h3 className="mt-4 text-[15px] font-medium">{f.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-[var(--muted-color)]">{f.body}</p>
             </Reveal>
@@ -232,8 +240,8 @@ const Home: React.FC = () => {
         <ol className="grid gap-8 md:grid-cols-3">
           {steps.map((s, i) => (
             <Reveal key={s.title} delay={i * 0.06}>
-              <li className="border-t border-[var(--hairline-strong)] pt-5">
-                <span className="font-mono text-xs tabular-nums text-[var(--faint-color)]">0{i + 1}</span>
+              <li className="border-t-2 pt-5" style={{ borderColor: ['var(--accent-primary)', 'var(--accent-2)', 'var(--highlight)'][i % 3] }}>
+                <span className="font-mono text-xs tabular-nums text-[var(--muted-color)]">0{i + 1}</span>
                 <h3 className="mt-3 text-[15px] font-medium">{s.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-[var(--muted-color)]">{s.body}</p>
               </li>
@@ -244,12 +252,12 @@ const Home: React.FC = () => {
 
       {/* Closing CTA */}
       <section className="mx-auto max-w-5xl px-4 pb-24 sm:px-6">
-        <Reveal className="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] px-6 py-12 text-center sm:px-12">
-          <h2 className="text-2xl font-medium tracking-tight sm:text-3xl">Bring the idea you've been sitting on.</h2>
-          <p className="mt-3 text-[var(--muted-color)]">Free to start. No card needed.</p>
+        <Reveal className="rounded-2xl bg-[var(--band-bg)] px-6 py-14 text-center text-[var(--band-text)] sm:px-12">
+          <h2 className="text-2xl font-medium tracking-tight sm:text-3xl">Bring the idea you've been <span className="text-[var(--band-pop)]">sitting on</span>.</h2>
+          <p className="mt-3 text-[var(--band-muted)]">Free to start. No card needed.</p>
           <button
             onClick={() => navigate("/signup")}
-            className="mt-8 inline-flex h-11 items-center gap-2 rounded-lg bg-[var(--accent-primary)] px-5 text-sm font-medium text-[var(--accent-contrast)] transition-colors duration-150 hover:bg-[var(--accent-hover)]"
+            className="mt-8 inline-flex h-11 items-center gap-2 rounded-lg bg-[var(--band-pop)] px-5 text-sm font-medium text-[#14100c] transition-opacity duration-150 hover:opacity-90"
           >
             Create an account
             <ArrowRight size={16} strokeWidth={1.75} />
